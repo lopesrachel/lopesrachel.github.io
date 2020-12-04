@@ -11,7 +11,7 @@ description: ''
 This is my first post! I hope it works. test post test post test post test
 post test post test post test post test post test post test post test post
 
-[Link to project 1](/projects/project1/)
+[Link to project 1](/project/project1/)
 
 [Link to google](https://www.google.com)
 
