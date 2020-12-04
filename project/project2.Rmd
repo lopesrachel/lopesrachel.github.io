@@ -1,0 +1,288 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "Rachel Lopes | rml2633"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+```{R}
+library(tidyverse)
+gyms <- read_csv("ny_gym_school_data.csv")
+
+#first, exclude outdoor spaces bc much likelier to be large and unshared - will skew samples
+gyms <- gyms %>% filter(location == "Inside")
+gyms <- gyms %>% filter(gym_room_function != 'SWIMMING POOL')
+nrow(gyms)
+```
+
+The dataset I will be using in this project is the same one I used for my last project, which was a combination of two datasets from the New York City Open Data database. Specifically, one measures the demographics of schools in the five New York City boroughs, and the other measures the amount and type of physical education space allocated to schools in each borough. I have filtered it to only include data from indoor gym spaces, as including large outdoor gym spaces skews the square footage of these areas, and I've also excluded swimming pools, as they also tend to be large. My dataset has many variables; however, I have chosen to focus on only a subset of these variables as I wanted to see what types of differences in physical education space and type are evident between the five New York City boroughs. Specifically, tot_enrollment refers to the amount of children who attend a certain school, gym_square_footage refers to the size of the physical education space in square feet, econ_as_num measures the economic index of the school in percentages, UnderrepresentedProportion refers to the amount of children that attend that school who come from an underrepresented background, gym_room_function refers to what the physical education space is used for primarily, has_another_purpose is a dichotomous variable regarding whether that space is specifically used for a certain purpose or is used for multiple activities, and Borough refers to which borough the school that usees that gym space is located in. In total, there are 5243 observations in this dataset.
+
+
+```{R}
+#from announcement code for MANOVA assumptions
+library(rstatix)
+
+group <- gyms$Borough
+DVs <- gyms %>% select(gym_square_footage, tot_enrollment, econ_as_num, UnderrepresentedProportion, Prop_LowIncome)
+
+#Test multivariate normality for each group (null: assumption met)
+sapply(split(DVs,group), mshapiro_test)
+
+m1 <- manova(cbind(gym_square_footage, tot_enrollment, econ_as_num, UnderrepresentedProportion, Prop_LowIncome) ~ Borough, data = gyms)
+summary(m1)
+
+summary(aov(gym_square_footage ~ Borough, data = gyms))
+summary(aov(tot_enrollment ~ Borough, data = gyms))
+summary(aov(econ_as_num ~ Borough, data = gyms))
+summary(aov(UnderrepresentedProportion ~ Borough, data = gyms))
+summary(aov(Prop_LowIncome ~ Borough, data = gyms))
+
+pairwise.t.test(gyms$gym_square_footage, gyms$Borough, p.adj = "none")
+pairwise.t.test(gyms$tot_enrollment, gyms$Borough, p.adj = "none")
+pairwise.t.test(gyms$econ_as_num, gyms$Borough, p.adj = "none")
+pairwise.t.test(gyms$UnderrepresentedProportion, gyms$Borough, p.adj = "none")
+pairwise.t.test(gyms$Prop_LowIncome, gyms$Borough, p.adj = "none")
+```
+
+Since my dataset includes many numerical variables, I chose to test whether a subset of them show a mean difference across levels of the variable Borough, which indicates what major neighborhood of New York City that a certain school physical education space can be found in. First, the mshapiro test was used to test the multivariate normality for each group. For each level of the categorial variable Borough, this assumption was not met, as the null hypothesis was rejected for all cases. Therefore, MANOVA assumptions were not met. I then conducted the MANOVA for gym_square_footage, tot_enrollment, exon_as_num, UnderrepresentedProportion, and Prop_LowIncome across levels of Borough. The calculated Pr was found to be much less than 0.05, so the null hypothesis that the means of all groups are equal to each other is rejected. 
+
+Next, univariate ANOVA tests were conducted to see for which variables there is a mean difference across Boroughs. The null hypothesis was rejected in all cases, suggesting that there is a significant difference in mean across Boroughs for the variables gym_square_footage, tot_enrollment, exon_as_num, UnderrepresentedProportion, and Prop_LowIncome. Since this dataset is the same as the one that I used for the first project, I expected this result, as the analysis done in the previous project suggested that children zoned to different boroughs did not necessarily have access to similar amounts of gym space, nor did the boroughs themselves seem to be balanced in terms of representation of people from different races as well as economic opportunities. There were a total of 11 tests done, so the probability of at least one type I error is 0.431, and the Bonferroni correction changes the significance level to 0.0045. Of the post hoc tests done, none lose significance after the significance level is adjusted.
+
+
+```{R}
+#randomization test is categorical vs numeric so we wil compute the mean difference
+gyms %>% group_by(shared) %>% summarize(means = mean(gym_square_footage)) %>% summarize(`mean_diff` = diff(means))
+
+rand_dist <- vector()
+for(i in 1:5000){
+sampled_gyms <- data.frame(footage = sample(gyms$gym_square_footage), shared = gyms$shared)
+rand_dist[i] <- mean(sampled_gyms[sampled_gyms$shared == "Y", ]$footage) - mean(sampled_gyms[sampled_gyms$shared == "N", ]$footage)
+}
+
+hist(rand_dist); abline(v = c(-309.87, 309.87), col="purple")
+mean(rand_dist > 309.87 | rand_dist < -309.87)
+t.test(data = gyms, gym_square_footage ~ shared)
+```
+
+The randomization test that I chose to perform is the mean difference test to see whether square footage of physical education spaces is different based on whether they are shared between multiple schools or reserved for a single school. This specific test was chosen because the two variables I chose to analyze were categorical vs numerical, which meant that the mean difference was an appropriate test statistic to compute. The null hypothesis is that there is no difference between the mean of gym size in square footage whether the gym is shared or not. In the case that this null hypothesis is rejected, the alternate hypothesis is that there is a significant difference in the mean square footage of gyms shared between schools versus gyms not shared by schools. 
+
+Firstly, the mean difference test statistic was computed by comparing the difference in means between physical education spaces shared by multiple schools and physical education spaces limited to just one school. The test statistic was found to be 309.97, which is fairly large. A randomization test was also performed in order to break up this association and test what the probability is of obtaining a mean difference this large with randomized data, which was found to be 0.002. This probability is smaller than 0.05, so the null hypothesis can be rejected.
+
+For comparison, a t-test was conducted and a p-value of 0.000008094, which is much smaller than 0.05, was obtained, signifying that it is appropriate to reject the null hypothesis and state that the true difference in means between shared vs non-shared gyms is not equal to 0.
+
+
+```{R}
+library(sandwich)
+library(lmtest)
+library(glmnet)
+
+#response var will be square footage based on function borough and number gyms 
+gyms$tot_enrollment_c <- gyms$tot_enrollment - mean(gyms$tot_enrollment, na.rm = T)
+gym_fit <- lm(gym_square_footage ~ tot_enrollment_c * gym_room_function, data = gyms, family = binomial)
+summary(gym_fit)
+gyms %>% ggplot(aes(tot_enrollment_c, gym_square_footage, color = gym_room_function)) + geom_smooth(method = "lm")
+
+#testing assumptions
+bptest(gym_fit)
+plot(gyms$tot_enrollment_c, gyms$gym_square_footage)
+resids <- gym_fit$residuals
+ks.test(resids, "pnorm", mean = 0, sd(resids))
+
+#robust standard errors
+coeftest(gym_fit, vcov = vcovHC(gym_fit))
+```
+
+Firstly, it is apparent from checking the assumptions that this data does not meet any of the 3 prerequisites required to build a linear regression model. From the scatterplot featuring the numeric variables plotted against each other, the data breaks the assumption of linearity. The Kolmogorov-Smirnov test was then run and the null hypothesis was rejected, which implies that the residuals were not normally distributed. Lastly, the Breuch-Pagan test was also run, and the null hypothesis was rejected here as well, which means that the assumption of homoskedasticity is also not met.
+
+Mean predicted gym square footage decreases by 0.036 for every 1 unit increase in the total enrollment at schools with adaptive physical education rooms. The mean for auxiliary exercise rooms at schools with average enrollment numbers is around 190 square feet greater for these rooms than it is for adaptive physical education rooms. Dance rooms at schools with average enrollment numbers have an average mean square footage 192 square feet greater than that of adaptive physical education rooms. Field houses at schools with average enrollment numbers have an average mean square footage 4110 square feet greater than that of adaptive physical education rooms. Gyms at schools with average enrollment numbers have an average mean square footage 3875 square feet greater than that of adaptive physical education rooms. Multi-purpose classrooms at schools with average enrollment numbers have an average mean square footage 30 square feet lesser than that of adaptive physical education rooms. Multi-purpose rooms at schools with average enrollment numbers have an average mean square footage 595 square feet greater than that of adaptive physical education rooms. Playrooms at schools with average enrollment numbers have an average mean square footage 2122 square feet greater than that of adaptive physical education rooms. Weight rooms at schools with average enrollment numbers have an average mean square footage 537 square feet greater than that of adaptive physical education rooms.  
+
+The slope of tot_enrollment_c on gym_square_footage for auxiliary exercise rooms is 0.708 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for dance rooms is 0.139 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for field houses is 3.74 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for gyms is 0.237 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for multi-purpose classrooms is 0.133 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for multi-purpose rooms is 0.232 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for playrooms is 0.508 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for weight rooms is 0.039 greater than that for adaptive physical education rooms.
+
+After robust standard errors were used to recompute the regression results, it was found that tot_enrollment_c, gym_room_functionDANCE ROOM, gym_room_functionGYM, gym_room_functionMULTI-PURPOSE CLASSROOM, gym_room_functionMULTI-PURPOSE ROOM, and gym_room_functionWEIGHT ROOM  are significant in this iteration of the model. tot_enrollment_c:gym_room_functionFIELD HOUSE, gym_room_functionPLAYROOM, and tot_enrollment_c:gym_room_functionFIELD HOUSE were significant but are no longer significant with the robust standard error model. In addition, gym_room_functionDANCE ROOM and gym_room_functionMULTI-PURPOSE CLASSROOM were not significant to the model before it was recomputed with robust standard errors. According to the R^2, the original model explains 52.95% of variation found within gym_square_footage in the model.
+
+
+```{R}
+samp_dist <- replicate(5000, {
+  new_boot_dat <- sample_frac(gyms, replace = T) 
+  oth_lm <- lm(gym_square_footage ~ tot_enrollment_c * gym_room_function, data = new_boot_dat)
+  coef(oth_lm) 
+}) 
+
+#standard errors
+do.call(rbind, samp_dist) %>% as.data.frame %>% summarize_all(sd, na.rm=T)
+```
+
+I noticed that the standard errors are a little different when recomputed with bootstrapped standard errors, which makes sense, since the assumptions of linearity, homoskedasticity, and normality were all rejected. The bootstrapped standard errors seem to, for the most part, be in line with those computed with robust standard errors. However, for the variables gym_room_functionGYM, gym_room_functionFIELD HOUSE, gym_room_functionMULTI-PURPOSE ROOM, and tot_enrollment_c:gym_room_functionPLAYROOM, the standard errors differ by a great amount. I expected this to occur for the field house instance of gym_room_function, as values for that instance are extremely spread out and vary by a large amount, but I was surprised for the other instance of gym_room_function that this also occured with. I believe that this occured because the other variables that this drastic difference is seen in break the 3 assumptions to a great amount, and since bootstrapped residuals take into account both heteroskedasticity and being non-normal. Therefore, all the significant changes I observed in SEs between bootstrapped and robust SEs are probably due to these instances having significant deviation from the normal population observation. The other categories must have only significantly broken the homoskedasticity assumption, as their observed SEs were very similar to those observed with robust standard error calculation.
+
+With regards to the original standard errors, besides for gym_room_functionMULTI-PURPOSE ROOM,  gym_room_functionPLAYROOM, and tot_enrollment_c:gym_room_functionAUXILIARY EXERCISE ROOM, the bootstrapped standard errors are extremely different. This is probably because most of the original data points within each subgroup did not meet the three assumptions - normality, homoskedasticity, and linearity - needed for the linear regression.
+
+Although I expected standard errors to increase and the models to get more conservative as we accounted for more errors in assumptions, this did not for all computed standard errors. Generally, however, the bootstrapped standard errors or the robust standard errors had the most conservative computed standard errors when not computing interaction standard errors. Interaction standard errors tended to be more conservative in the original regression model, except in cases where the standard error was greater than 1.
+
+    
+```{R}
+#class_diags function from class
+class_diag<-function(probs,truth){
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  f1=2*(sens*ppv)/(sens+ppv)
+
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE){
+    truth<-as.numeric(truth)-1}
+  
+  #CALCULATE EXACT AUC
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,f1,auc)
+}
+#end class_diags function from class
+
+gyms$Prop_LowIncome_c <- gyms$Prop_LowIncome - mean(gyms$Prop_LowIncome, na.rm = T)
+gyms$gym_square_footage_c <- gyms$gym_square_footage - mean(gyms$gym_square_footage, na.rm = T)
+
+gyms$has_other_purpose <- as.factor(gyms$has_other_purpose)
+gyms_lm <- glm(has_other_purpose ~ (Prop_LowIncome_c + gym_square_footage_c + Borough), data = gyms, family = binomial)
+summary(gyms_lm)
+exp(coef(gyms_lm))
+prob <- predict(gyms_lm, fit = "response")
+pred <- ifelse(prob > .5, "True", "False")
+
+#class diags and other computed values
+class_diag(prob, gyms$has_other_purpose)
+
+#confusion matrix
+table(truth = gyms$has_other_purpose, prediction = pred) %>% addmargins
+3648/5243
+
+#density plot
+logit <- predict(gyms_lm, type="link")
+gyms_df <- data.frame(gyms$has_other_purpose, logit)
+ggplot(gyms_df, aes(logit, fill = gyms.has_other_purpose, color = gyms.has_other_purpose, alpha = 0.5)) + geom_density()
+
+#ROC plot
+library(plotROC)
+
+gyms1 <- gyms %>% select(has_other_purpose, Prop_LowIncome_c, gym_square_footage_c, Borough) %>% na.omit()
+gyms1 <- gyms1 %>% mutate(y = ifelse(has_other_purpose == "Y", 1, 0))
+
+gyms1$prob <- prob
+gyms1$predicted <- ifelse(gyms1$prob > .5, "Y", "N")
+length(gyms1$y)
+
+ROCplot <- ggplot(gyms1) + geom_roc(aes(d = y, m = prob), n.cuts = 0) 
+ROCplot
+calc_auc(ROCplot)
+```
+
+The odds that a physical education space which is average-sized and from a school with an average amount of low income students has another purpose is 29%. The odds that a Brooklyn-based average-sized physical education space from a school with an average amount of low income students has another purpose is 1.06 times higher than that of one from the Bronx. The odds that a Manhattan-based average-sized physical education space from a school with an average amount of low income students has another purpose is 1.24 times higher than that of one from the Bronx. The odds that a Queens-based average-sized physical education space from a school with an average amount of low income students has another purpose is 1.25 times higher than that of one from the Bronx. The odds that a Staten Island-based average-sized physical education space from a school with an average amount of low income students has another purpose is 1.38 times higher than that of one from the Bronx. For all the previous statements, Prop_LowIncome_c and gym_square_footage_c were controlled for. Controlling for borough and Prop_LowIncome_c, for every 1-unit increase in gym_square_footage_c, odds of the space having another purpose change by 0.999. Controlling for borough and gym_square_footage_c, for every 1-unit increase in Prop_LowIncome_c, odds of the space having another purpose change by 1.686.
+
+The AUC for this model was found to be 0.7537, which is a fair AUC. The ACC is 0.70, however, both the True Positivity Rate and the Precision are 0, as there were no spaces correctly predicted as true. The True Negativity Rate was also 0.70. This and the low AUC prove that this is not a very effective model for predicting whether a space is used for another purpose. It was possible to predict that the AUC would be low, as the logit plot had a large amount of physical education spaces shaded in in the portion in both the "Y" and "N" has_other_purpose category. In addition, looking at the ROC plot itself, it is very curved and not close to the left side at all, indicating that the tradeoff between sensitivity and specificity is not very favorable, and that the model isn't great.
+
+    
+```{R}
+gyms_w <- gyms %>% select(-(1:4), -location, -tot_enrollment_c)
+gyms_lm_all <- glm(has_other_purpose ~ (.), data = gyms_w, family = binomial)
+summary(gyms_lm_all)
+exp(coef(gyms_lm_all))
+prob_all <- predict(gyms_lm_all, fit = "response")
+pred_all <- ifelse(prob_all > .5, "True", "False")
+class_diag(prob_all, gyms$has_other_purpose)
+
+#10-fold CV
+k=10
+gyms_w_random <- gyms_w[sample(nrow(gyms_w)),]
+folds <- cut(seq(1:nrow(gyms_w_random)), breaks = k, labels = F)
+all_class_diags <- data.frame()
+for(i in 1:k){
+  train <- gyms_w_random[folds != i, ]
+  test <- gyms_w_random[folds == i, ]
+  truth_2 <- test$has_other_purpose 
+  fold_fit <- glm(has_other_purpose ~ (.), train, family = "binomial")
+  probs_2 <- predict(fold_fit, newdata = test, family = "response")
+  all_class_diags <- rbind(all_class_diags, class_diag(probs_2, truth_2))
+}
+all_class_diags %>% summarize_all(mean)
+
+#LASSO
+resp <- as.matrix(gyms_w$has_other_purpose)
+gyms_preds <- model.matrix(gyms_lm_all)[,-1]
+cv_gyms <- cv.glmnet(gyms_preds, resp, family = "binomial")
+lasso_fit <- glmnet(gyms_preds, resp, family = "binomial", lambda = cv_gyms$lambda.1se)
+coef(lasso_fit)
+gyms_probs_lasso <- predict(lasso_fit, gyms_preds, type = "response")
+class_diag(gyms_probs_lasso, gyms_w$has_other_purpose)
+
+#redone 10-fold CV
+gyms_w$brooklyn <- gyms_preds[, "BoroughBrooklyn"]
+gyms_w$staten <- gyms_preds[, "BoroughStaten Island"]
+gyms_w$queens <- gyms_preds[, "BoroughQueens"]
+gyms_w$elem <- gyms_preds[, "gradesElementary"]
+gyms_w$high <- gyms_preds[, "gradesHigh school"]
+gyms_w$middle <- gyms_preds[, "gradesJunior High-Intermediate-Middle"]
+gyms_w$aux <- gyms_preds[, "gym_room_functionAUXILIARY EXERCISE ROOM"]
+gyms_w$dance <- gyms_preds[, "gym_room_functionDANCE ROOM"]
+gyms_w$field <- gyms_preds[, "gym_room_functionFIELD HOUSE"]
+gyms_w$gym <- gyms_preds[, "gym_room_functionGYM"]
+gyms_w$multiclass <- gyms_preds[, "gym_room_functionMULTI-PURPOSE CLASSROOM"]
+gyms_w$multiroom <- gyms_preds[, "gym_room_functionMULTI-PURPOSE ROOM"]
+gyms_w$play <- gyms_preds[, "gym_room_functionPLAYROOM"]
+gyms_w$weight <- gyms_preds[, "gym_room_functionWEIGHT ROOM"]
+gyms_w$sharedy <- gyms_preds[, "sharedY"]
+
+gyms_w_random_2 <- gyms_w[sample(nrow(gyms_w)),]
+all_class_diags_2 <- data.frame()
+folds2 <- cut(seq(1:nrow(gyms_w_random_2)), breaks = k,labels = F)
+for(i in 1:k){
+  train <- gyms_w_random_2[folds2 != i, ]
+  test <- gyms_w_random_2[folds2 == i, ]
+  truth_3 <- test$has_other_purpose 
+  fold_fit2 <- glm(has_other_purpose ~ brooklyn + staten + queens + elem + high + middle + aux + dance + field + gym + multiclass + multiroom + play + weight + tot_enrollment + num_male + Number_Black + Number_White + gym_square_footage + econ_as_num + UnderrepresentedProportion + sharedy, train, family = "binomial")
+  probs_3 <- predict(fold_fit2, newdata = test, family = "response")
+  all_class_diags_2 <- rbind(all_class_diags_2, class_diag(probs_3, truth_3))
+}
+all_class_diags_2 %>% summarize_all(mean)
+```
+
+For the first logistic regression model, the accuracy was computed to be 0.968, the sensitivity 0.896, the specificity 0.999, the precision 0.999, and the AUC 0.987. It seems that using all the variables in the logistic regression model is a pretty good predictor of whether a gym will be multi-use or single use, as the AUC is extremely high. While the true positive rate is significantly lower than the true negative rate, which was close to perfect, the accuracy was still extremely high. In fact, the proportion classified as multi-use physical education spaces that actually are, the ppv, was also near-perfect at 0.999. All of these indicate that even though all the variables were used, the model is very good for the current data; however, we will need to check this model for overfitting.
+
+To test whether overfitting occured and how well this model works overall, a 10-fold CV with this model was performed. Average out-of-sample classification diagnostics remained very similar to the those found in the in-sample model - the ACC was 0.97, sensitivity was 0.9, specificity was 0.999, ppv was 0.998, and AUC was 0.98. This indicates that using all the variables does not result in overfitting, as all classification diagnostics remained relatively similar to what they were before. Therefore, using all the variables in the logistic regression model seems to result in a fairly accurate model.
+
+Next, LASSO was performed in order to test which variables must be retained to create a simple yet accurate model. The variables that were retained are BoroughBrooklyn, BoroughStaten Island, BoroughQueens, gradesElementary, gradesHigh school, gradesJuniorHigh-Intermediate-Middle, gym_square_footage, gym_room_functionAUXILIARY EXERCISE ROOM, gym_room_functionDANCE ROOM, gym_room_functionGYM, gym_room_functionMULTI-PURPOSE CLASSROOM, gym_room_functionMULTI-PURPOSE ROOM, gym_room_functionPLAYROOM, gym_room_functionWEIGHT ROOM, sharedY, and econ_as_num. It seems that all the categories for the gym_room_function with the exception of FIELD HOUSE were retained, meaning that the gym_room_function. for the most part, is very important in correctly predicting whether the physical education space. This is very apparent with the multi purpose rooms, as those have in the descriptor that they have dual purposes, and this is apparent in how large the values obtained from LASSO are. Both of the secondary school indicators are in the negatives, meaning that schools have more specialized spaces for physical education as children get older. This is what I had expected. In addition, the weight rooms, dance rooms, and auxiliary exercise rooms have a negative result from LASSO as well, which makes sense since those are generally used for specialized purposes.
+
+The 10-fold CV performed based on a model with only variables selected by LASSO performed very similarly compared to the other models that were presented, which I believe is because the LASSO picked most of the variables as relevant to the simple but effective model. I think that because the original model which used all the variables worked so well as a predictor, the LASSO model's AUC, PPV, sensitivity, and specificity stayed similar to that one, as it also used many variables. All these values may have also remained very similar to each other because this dataset has so many observations. The 10-fold CV based on the LASSO model, however, had much better AUC and other classification diagnostics than the model above, which solely used Prop_LowIncome, gym_square_footage, and Borough as predictors. It's interesting because I had believed that Borough would play a much bigger role in the predictor of whether a gym space is multi-use or not; however, it is evident from the models above that the category the gym space falls into is a more accurate predictor of whether it is a multi-use space.

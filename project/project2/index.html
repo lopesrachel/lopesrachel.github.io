@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Rachel Lopes" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
+    <title>Project 2: Modeling, Testing, and Predicting</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/post/">BLOG</a></li>
+        
+        <li><a href="/projects/">PROJECTS</a></li>
+        
+        <li><a href="/resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/project/project2/">Project 2: Modeling, Testing, and Predicting</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<pre class="r"><code>library(tidyverse)
+gyms &lt;- read_csv(&quot;ny_gym_school_data.csv&quot;)
+
+#first, exclude outdoor spaces bc much likelier to be large and unshared - will skew samples
+gyms &lt;- gyms %&gt;% filter(location == &quot;Inside&quot;)
+gyms &lt;- gyms %&gt;% filter(gym_room_function != &#39;SWIMMING POOL&#39;)
+nrow(gyms)</code></pre>
+<pre><code>## [1] 5243</code></pre>
+<p>The dataset I will be using in this project is the same one I used for my last project, which was a combination of two datasets from the New York City Open Data database. Specifically, one measures the demographics of schools in the five New York City boroughs, and the other measures the amount and type of physical education space allocated to schools in each borough. I have filtered it to only include data from indoor gym spaces, as including large outdoor gym spaces skews the square footage of these areas, and I’ve also excluded swimming pools, as they also tend to be large. My dataset has many variables; however, I have chosen to focus on only a subset of these variables as I wanted to see what types of differences in physical education space and type are evident between the five New York City boroughs. Specifically, tot_enrollment refers to the amount of children who attend a certain school, gym_square_footage refers to the size of the physical education space in square feet, econ_as_num measures the economic index of the school in percentages, UnderrepresentedProportion refers to the amount of children that attend that school who come from an underrepresented background, gym_room_function refers to what the physical education space is used for primarily, has_another_purpose is a dichotomous variable regarding whether that space is specifically used for a certain purpose or is used for multiple activities, and Borough refers to which borough the school that usees that gym space is located in. In total, there are 5243 observations in this dataset.</p>
+<pre class="r"><code>#from announcement code for MANOVA assumptions
+library(rstatix)
+
+group &lt;- gyms$Borough
+DVs &lt;- gyms %&gt;% select(gym_square_footage, tot_enrollment, econ_as_num, UnderrepresentedProportion, Prop_LowIncome)
+
+#Test multivariate normality for each group (null: assumption met)
+sapply(split(DVs,group), mshapiro_test)</code></pre>
+<pre><code>## Bronx Brooklyn Manhattan Queens Staten Island
+## statistic 0.3015742 0.8230913 0.6537356 0.6022333
+0.9110847
+## p.value 8.506001e-55 8.552922e-39 1.574776e-43
+9.723516e-44 7.20022e-11</code></pre>
+<pre class="r"><code>m1 &lt;- manova(cbind(gym_square_footage, tot_enrollment, econ_as_num, UnderrepresentedProportion, Prop_LowIncome) ~ Borough, data = gyms)
+summary(m1)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## Borough 4 0.36809 106.15 20 20948 &lt; 2.2e-16 ***
+## Residuals 5238
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(aov(gym_square_footage ~ Borough, data = gyms))</code></pre>
+<pre><code>## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Borough 4 2.693e+08 67334239 11.09 5.86e-09 ***
+## Residuals 5238 3.180e+10 6070688
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(aov(tot_enrollment ~ Borough, data = gyms))</code></pre>
+<pre><code>## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Borough 4 8.451e+07 21128613 63.07 &lt;2e-16 ***
+## Residuals 5238 1.755e+09 335008
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(aov(econ_as_num ~ Borough, data = gyms))</code></pre>
+<pre><code>## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Borough 4 468471 117118 428.6 &lt;2e-16 ***
+## Residuals 5238 1431224 273
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(aov(UnderrepresentedProportion ~ Borough, data = gyms))</code></pre>
+<pre><code>## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Borough 4 65.8 16.449 249.8 &lt;2e-16 ***
+## Residuals 5238 344.9 0.066
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(aov(Prop_LowIncome ~ Borough, data = gyms))</code></pre>
+<pre><code>## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Borough 4 20.89 5.223 167.1 &lt;2e-16 ***
+## Residuals 5238 163.78 0.031
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>pairwise.t.test(gyms$gym_square_footage, gyms$Borough, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  gyms$gym_square_footage and gyms$Borough 
+## 
+##               Bronx   Brooklyn Manhattan Queens 
+## Brooklyn      0.00274 -        -         -      
+## Manhattan     8.5e-10 0.00032  -         -      
+## Queens        0.34821 0.05815  5.0e-07   -      
+## Staten Island 0.53414 0.29923  0.00286   0.95613
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(gyms$tot_enrollment, gyms$Borough, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  gyms$tot_enrollment and gyms$Borough 
+## 
+##               Bronx   Brooklyn Manhattan Queens
+## Brooklyn      0.0042  -        -         -     
+## Manhattan     0.0028  1.4e-09  -         -     
+## Queens        &lt; 2e-16 2.0e-15  &lt; 2e-16   -     
+## Staten Island &lt; 2e-16 8.8e-15  &lt; 2e-16   0.0022
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(gyms$econ_as_num, gyms$Borough, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  gyms$econ_as_num and gyms$Borough 
+## 
+##               Bronx   Brooklyn Manhattan Queens
+## Brooklyn      &lt; 2e-16 -        -         -     
+## Manhattan     &lt; 2e-16 1.4e-08  -         -     
+## Queens        &lt; 2e-16 &lt; 2e-16  &lt; 2e-16   -     
+## Staten Island &lt; 2e-16 &lt; 2e-16  &lt; 2e-16   0.0069
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(gyms$UnderrepresentedProportion, gyms$Borough, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  gyms$UnderrepresentedProportion and gyms$Borough 
+## 
+##               Bronx   Brooklyn Manhattan Queens 
+## Brooklyn      &lt; 2e-16 -        -         -      
+## Manhattan     &lt; 2e-16 0.012    -         -      
+## Queens        &lt; 2e-16 &lt; 2e-16  8.8e-16   -      
+## Staten Island &lt; 2e-16 &lt; 2e-16  &lt; 2e-16   &lt; 2e-16
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(gyms$Prop_LowIncome, gyms$Borough, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  gyms$Prop_LowIncome and gyms$Borough 
+## 
+##               Bronx   Brooklyn Manhattan Queens 
+## Brooklyn      &lt; 2e-16 -        -         -      
+## Manhattan     &lt; 2e-16 &lt; 2e-16  -         -      
+## Queens        &lt; 2e-16 &lt; 2e-16  0.69      -      
+## Staten Island &lt; 2e-16 &lt; 2e-16  2.8e-15   3.4e-14
+## 
+## P value adjustment method: none</code></pre>
+<p>Since my dataset includes many numerical variables, I chose to test whether a subset of them show a mean difference across levels of the variable Borough, which indicates what major neighborhood of New York City that a certain school physical education space can be found in. First, the mshapiro test was used to test the multivariate normality for each group. For each level of the categorial variable Borough, this assumption was not met, as the null hypothesis was rejected for all cases. Therefore, MANOVA assumptions were not met. I then conducted the MANOVA for gym_square_footage, tot_enrollment, exon_as_num, UnderrepresentedProportion, and Prop_LowIncome across levels of Borough. The calculated Pr was found to be much less than 0.05, so the null hypothesis that the means of all groups are equal to each other is rejected.</p>
+<p>Next, univariate ANOVA tests were conducted to see for which variables there is a mean difference across Boroughs. The null hypothesis was rejected in all cases, suggesting that there is a significant difference in mean across Boroughs for the variables gym_square_footage, tot_enrollment, exon_as_num, UnderrepresentedProportion, and Prop_LowIncome. Since this dataset is the same as the one that I used for the first project, I expected this result, as the analysis done in the previous project suggested that children zoned to different boroughs did not necessarily have access to similar amounts of gym space, nor did the boroughs themselves seem to be balanced in terms of representation of people from different races as well as economic opportunities. There were a total of 11 tests done, so the probability of at least one type I error is 0.431, and the Bonferroni correction changes the significance level to 0.0045. Of the post hoc tests done, none lose significance after the significance level is adjusted.</p>
+<pre class="r"><code>#randomization test is categorical vs numeric so we wil compute the mean difference
+gyms %&gt;% group_by(shared) %&gt;% summarize(means = mean(gym_square_footage)) %&gt;% summarize(`mean_diff` = diff(means))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   mean_diff
+##       &lt;dbl&gt;
+## 1      310.</code></pre>
+<pre class="r"><code>rand_dist &lt;- vector()
+for(i in 1:5000){
+sampled_gyms &lt;- data.frame(footage = sample(gyms$gym_square_footage), shared = gyms$shared)
+rand_dist[i] &lt;- mean(sampled_gyms[sampled_gyms$shared == &quot;Y&quot;, ]$footage) - mean(sampled_gyms[sampled_gyms$shared == &quot;N&quot;, ]$footage)
+}
+
+hist(rand_dist); abline(v = c(-309.87, 309.87), col=&quot;purple&quot;)</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>mean(rand_dist &gt; 309.87 | rand_dist &lt; -309.87)</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>t.test(data = gyms, gym_square_footage ~ shared)</code></pre>
+<pre><code>##
+## Welch Two Sample t-test
+##
+## data: gym_square_footage by shared
+## t = -4.4706, df = 2955.9, p-value = 8.094e-06
+## alternative hypothesis: true difference in means is not
+equal to 0
+## 95 percent confidence interval:
+## -445.7765 -173.9634
+## sample estimates:
+## mean in group N mean in group Y
+## 2472.837 2782.707</code></pre>
+<p>The randomization test that I chose to perform is the mean difference test to see whether square footage of physical education spaces is different based on whether they are shared between multiple schools or reserved for a single school. This specific test was chosen because the two variables I chose to analyze were categorical vs numerical, which meant that the mean difference was an appropriate test statistic to compute. The null hypothesis is that there is no difference between the mean of gym size in square footage whether the gym is shared or not. In the case that this null hypothesis is rejected, the alternate hypothesis is that there is a significant difference in the mean square footage of gyms shared between schools versus gyms not shared by schools.</p>
+<p>Firstly, the mean difference test statistic was computed by comparing the difference in means between physical education spaces shared by multiple schools and physical education spaces limited to just one school. The test statistic was found to be 309.97, which is fairly large. A randomization test was also performed in order to break up this association and test what the probability is of obtaining a mean difference this large with randomized data, which was found to be 0.002. This probability is smaller than 0.05, so the null hypothesis can be rejected.</p>
+<p>For comparison, a t-test was conducted and a p-value of 0.000008094, which is much smaller than 0.05, was obtained, signifying that it is appropriate to reject the null hypothesis and state that the true difference in means between shared vs non-shared gyms is not equal to 0.</p>
+<pre class="r"><code>library(sandwich)
+library(lmtest)
+library(glmnet)
+
+#response var will be square footage based on function borough and number gyms 
+gyms$tot_enrollment_c &lt;- gyms$tot_enrollment - mean(gyms$tot_enrollment, na.rm = T)
+gym_fit &lt;- lm(gym_square_footage ~ tot_enrollment_c * gym_room_function, data = gyms, family = binomial)
+summary(gym_fit)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = gym_square_footage ~ tot_enrollment_c *
+gym_room_function,
+## data = gyms, family = binomial)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -4196.0 -762.6 -196.2 472.1 20619.7
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 847.74094 181.57386 4.669 3.10e-06
+## tot_enrollment_c -0.03630 0.60061 -0.060 0.95181
+## gym_room_functionAUXILIARY EXERCISE ROOM 190.19690
+213.67766 0.890 0.37345
+## gym_room_functionDANCE ROOM 192.29837 192.38287 1.000
+0.31757
+## gym_room_functionFIELD HOUSE 4110.47024 720.15769 5.708
+1.21e-08
+## gym_room_functionGYM 3875.42809 185.01075 20.947 &lt; 2e-16
+## gym_room_functionMULTI-PURPOSE CLASSROOM -29.82697
+191.98506 -0.155 0.87654
+## gym_room_functionMULTI-PURPOSE ROOM 594.88885 193.44257
+3.075 0.00211
+## gym_room_functionPLAYROOM 2122.21627 401.08918 5.291
+1.27e-07
+## gym_room_functionWEIGHT ROOM 537.41258 197.97408 2.715
+0.00666
+## tot_enrollment_c:gym_room_functionAUXILIARY EXERCISE
+ROOM 0.70839 0.61585 1.150 0.25008
+## tot_enrollment_c:gym_room_functionDANCE ROOM 0.13888
+0.61007 0.228 0.81993
+## tot_enrollment_c:gym_room_functionFIELD HOUSE 3.74179
+1.61406 2.318 0.02047
+## tot_enrollment_c:gym_room_functionGYM 0.23672 0.60406
+0.392 0.69517
+## tot_enrollment_c:gym_room_functionMULTI-PURPOSE
+CLASSROOM 0.13301 0.61879 0.215 0.82981
+## tot_enrollment_c:gym_room_functionMULTI-PURPOSE ROOM
+0.23155 0.61233 0.378 0.70533
+## tot_enrollment_c:gym_room_functionPLAYROOM 0.50843
+1.63029 0.312 0.75516
+## tot_enrollment_c:gym_room_functionWEIGHT ROOM 0.03887
+0.60687 0.064 0.94893
+##
+## (Intercept) ***
+## tot_enrollment_c
+## gym_room_functionAUXILIARY EXERCISE ROOM
+## gym_room_functionDANCE ROOM
+## gym_room_functionFIELD HOUSE ***
+## gym_room_functionGYM ***
+## gym_room_functionMULTI-PURPOSE CLASSROOM
+## gym_room_functionMULTI-PURPOSE ROOM **
+## gym_room_functionPLAYROOM ***
+## gym_room_functionWEIGHT ROOM **
+## tot_enrollment_c:gym_room_functionAUXILIARY EXERCISE
+ROOM
+## tot_enrollment_c:gym_room_functionDANCE ROOM
+## tot_enrollment_c:gym_room_functionFIELD HOUSE *
+## tot_enrollment_c:gym_room_functionGYM
+## tot_enrollment_c:gym_room_functionMULTI-PURPOSE
+CLASSROOM
+## tot_enrollment_c:gym_room_functionMULTI-PURPOSE ROOM
+## tot_enrollment_c:gym_room_functionPLAYROOM
+## tot_enrollment_c:gym_room_functionWEIGHT ROOM
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 1696 on 5225 degrees of freedom
+## Multiple R-squared: 0.5311, Adjusted R-squared: 0.5295
+## F-statistic: 348.1 on 17 and 5225 DF, p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>gyms %&gt;% ggplot(aes(tot_enrollment_c, gym_square_footage, color = gym_room_function)) + geom_smooth(method = &quot;lm&quot;)</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#testing assumptions
+bptest(gym_fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  gym_fit
+## BP = 327.71, df = 17, p-value &lt; 2.2e-16</code></pre>
+<pre class="r"><code>plot(gyms$tot_enrollment_c, gyms$gym_square_footage)</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-4-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>resids &lt;- gym_fit$residuals
+ks.test(resids, &quot;pnorm&quot;, mean = 0, sd(resids))</code></pre>
+<pre><code>## 
+##  One-sample Kolmogorov-Smirnov test
+## 
+## data:  resids
+## D = 0.14438, p-value &lt; 2.2e-16
+## alternative hypothesis: two-sided</code></pre>
+<pre class="r"><code>#robust standard errors
+coeftest(gym_fit, vcov = vcovHC(gym_fit))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 847.740937 79.268464 10.6946 &lt; 2.2e-16
+## tot_enrollment_c -0.036302 0.263504 -0.1378 0.89043
+## gym_room_functionAUXILIARY EXERCISE ROOM 190.196898
+128.108745 1.4847 0.13770
+## gym_room_functionDANCE ROOM 192.298367 80.944148 2.3757
+0.01755
+## gym_room_functionFIELD HOUSE 4110.470240 3811.722744
+1.0784 0.28092
+## gym_room_functionGYM 3875.428088 92.776483 41.7717 &lt;
+2.2e-16
+## gym_room_functionMULTI-PURPOSE CLASSROOM -29.826974
+82.470355 -0.3617 0.71761
+## gym_room_functionMULTI-PURPOSE ROOM 594.888852 98.370989
+6.0474 1.574e-09
+## gym_room_functionPLAYROOM 2122.216267 432.676994 4.9049
+9.633e-07
+## gym_room_functionWEIGHT ROOM 537.412585 90.632049 5.9296
+3.231e-09
+## tot_enrollment_c:gym_room_functionAUXILIARY EXERCISE
+ROOM 0.708391 0.668769 1.0592 0.28954
+## tot_enrollment_c:gym_room_functionDANCE ROOM 0.138878
+0.266394 0.5213 0.60216
+## tot_enrollment_c:gym_room_functionFIELD HOUSE 3.741792
+14.273954 0.2621 0.79322
+## tot_enrollment_c:gym_room_functionGYM 0.236715 0.286102
+0.8274 0.40806
+## tot_enrollment_c:gym_room_functionMULTI-PURPOSE
+CLASSROOM 0.133013 0.267757 0.4968 0.61937
+## tot_enrollment_c:gym_room_functionMULTI-PURPOSE ROOM
+0.231555 0.300305 0.7711 0.44070
+## tot_enrollment_c:gym_room_functionPLAYROOM 0.508426
+1.728357 0.2942 0.76864
+## tot_enrollment_c:gym_room_functionWEIGHT ROOM 0.038869
+0.269679 0.1441 0.88540
+##
+## (Intercept) ***
+## tot_enrollment_c
+## gym_room_functionAUXILIARY EXERCISE ROOM
+## gym_room_functionDANCE ROOM *
+## gym_room_functionFIELD HOUSE
+## gym_room_functionGYM ***
+## gym_room_functionMULTI-PURPOSE CLASSROOM
+## gym_room_functionMULTI-PURPOSE ROOM ***
+## gym_room_functionPLAYROOM ***
+## gym_room_functionWEIGHT ROOM ***
+## tot_enrollment_c:gym_room_functionAUXILIARY EXERCISE
+ROOM
+## tot_enrollment_c:gym_room_functionDANCE ROOM
+## tot_enrollment_c:gym_room_functionFIELD HOUSE
+## tot_enrollment_c:gym_room_functionGYM
+## tot_enrollment_c:gym_room_functionMULTI-PURPOSE
+CLASSROOM
+## tot_enrollment_c:gym_room_functionMULTI-PURPOSE ROOM
+## tot_enrollment_c:gym_room_functionPLAYROOM
+## tot_enrollment_c:gym_room_functionWEIGHT ROOM
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p>Firstly, it is apparent from checking the assumptions that this data does not meet any of the 3 prerequisites required to build a linear regression model. From the scatterplot featuring the numeric variables plotted against each other, the data breaks the assumption of linearity. The Kolmogorov-Smirnov test was then run and the null hypothesis was rejected, which implies that the residuals were not normally distributed. Lastly, the Breuch-Pagan test was also run, and the null hypothesis was rejected here as well, which means that the assumption of homoskedasticity is also not met.</p>
+<p>Mean predicted gym square footage decreases by 0.036 for every 1 unit increase in the total enrollment at schools with adaptive physical education rooms. The mean for auxiliary exercise rooms at schools with average enrollment numbers is around 190 square feet greater for these rooms than it is for adaptive physical education rooms. Dance rooms at schools with average enrollment numbers have an average mean square footage 192 square feet greater than that of adaptive physical education rooms. Field houses at schools with average enrollment numbers have an average mean square footage 4110 square feet greater than that of adaptive physical education rooms. Gyms at schools with average enrollment numbers have an average mean square footage 3875 square feet greater than that of adaptive physical education rooms. Multi-purpose classrooms at schools with average enrollment numbers have an average mean square footage 30 square feet lesser than that of adaptive physical education rooms. Multi-purpose rooms at schools with average enrollment numbers have an average mean square footage 595 square feet greater than that of adaptive physical education rooms. Playrooms at schools with average enrollment numbers have an average mean square footage 2122 square feet greater than that of adaptive physical education rooms. Weight rooms at schools with average enrollment numbers have an average mean square footage 537 square feet greater than that of adaptive physical education rooms.</p>
+<p>The slope of tot_enrollment_c on gym_square_footage for auxiliary exercise rooms is 0.708 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for dance rooms is 0.139 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for field houses is 3.74 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for gyms is 0.237 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for multi-purpose classrooms is 0.133 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for multi-purpose rooms is 0.232 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for playrooms is 0.508 greater than that for adaptive physical education rooms. The slope of tot_enrollment_c on gym_square_footage for weight rooms is 0.039 greater than that for adaptive physical education rooms.</p>
+<p>After robust standard errors were used to recompute the regression results, it was found that tot_enrollment_c, gym_room_functionDANCE ROOM, gym_room_functionGYM, gym_room_functionMULTI-PURPOSE CLASSROOM, gym_room_functionMULTI-PURPOSE ROOM, and gym_room_functionWEIGHT ROOM are significant in this iteration of the model. tot_enrollment_c:gym_room_functionFIELD HOUSE, gym_room_functionPLAYROOM, and tot_enrollment_c:gym_room_functionFIELD HOUSE were significant but are no longer significant with the robust standard error model. In addition, gym_room_functionDANCE ROOM and gym_room_functionMULTI-PURPOSE CLASSROOM were not significant to the model before it was recomputed with robust standard errors. According to the R^2, the original model explains 52.95% of variation found within gym_square_footage in the model.</p>
+<pre class="r"><code>samp_dist &lt;- replicate(5000, {
+  new_boot_dat &lt;- sample_frac(gyms, replace = T) 
+  oth_lm &lt;- lm(gym_square_footage ~ tot_enrollment_c * gym_room_function, data = new_boot_dat)
+  coef(oth_lm) 
+}) 
+
+#standard errors
+do.call(rbind, samp_dist) %&gt;% as.data.frame %&gt;% summarize_all(sd, na.rm=T)</code></pre>
+<pre><code>## (Intercept) tot_enrollment_c gym_room_functionAUXILIARY
+EXERCISE ROOM gym_room_functionDANCE ROOM
+## 1 78.94212 0.253962 126.9146 80.93974
+## gym_room_functionFIELD HOUSE gym_room_functionGYM
+gym_room_functionMULTI-PURPOSE CLASSROOM
+## 1 2110.676 238.2668 89.53101
+## gym_room_functionMULTI-PURPOSE ROOM
+gym_room_functionPLAYROOM gym_room_functionWEIGHT ROOM
+## 1 133.1433 428.5763 95.38421
+## tot_enrollment_c:gym_room_functionAUXILIARY EXERCISE
+ROOM
+## 1 0.6432743
+## tot_enrollment_c:gym_room_functionDANCE ROOM
+tot_enrollment_c:gym_room_functionFIELD HOUSE
+## 1 0.2567589 7.594573
+## tot_enrollment_c:gym_room_functionGYM
+tot_enrollment_c:gym_room_functionMULTI-PURPOSE CLASSROOM
+## 1 0.2799928 0.2669815
+## tot_enrollment_c:gym_room_functionMULTI-PURPOSE ROOM
+tot_enrollment_c:gym_room_functionPLAYROOM
+## 1 0.2911136 46.73274
+## tot_enrollment_c:gym_room_functionWEIGHT ROOM
+## 1 0.2603047</code></pre>
+<p>I noticed that the standard errors are a little different when recomputed with bootstrapped standard errors, which makes sense, since the assumptions of linearity, homoskedasticity, and normality were all rejected. The bootstrapped standard errors seem to, for the most part, be in line with those computed with robust standard errors. However, for the variables gym_room_functionGYM, gym_room_functionFIELD HOUSE, gym_room_functionMULTI-PURPOSE ROOM, and tot_enrollment_c:gym_room_functionPLAYROOM, the standard errors differ by a great amount. I expected this to occur for the field house instance of gym_room_function, as values for that instance are extremely spread out and vary by a large amount, but I was surprised for the other instance of gym_room_function that this also occured with. I believe that this occured because the other variables that this drastic difference is seen in break the 3 assumptions to a great amount, and since bootstrapped residuals take into account both heteroskedasticity and being non-normal. Therefore, all the significant changes I observed in SEs between bootstrapped and robust SEs are probably due to these instances having significant deviation from the normal population observation. The other categories must have only significantly broken the homoskedasticity assumption, as their observed SEs were very similar to those observed with robust standard error calculation.</p>
+<p>With regards to the original standard errors, besides for gym_room_functionMULTI-PURPOSE ROOM, gym_room_functionPLAYROOM, and tot_enrollment_c:gym_room_functionAUXILIARY EXERCISE ROOM, the bootstrapped standard errors are extremely different. This is probably because most of the original data points within each subgroup did not meet the three assumptions - normality, homoskedasticity, and linearity - needed for the linear regression.</p>
+<p>Although I expected standard errors to increase and the models to get more conservative as we accounted for more errors in assumptions, this did not for all computed standard errors. Generally, however, the bootstrapped standard errors or the robust standard errors had the most conservative computed standard errors when not computing interaction standard errors. Interaction standard errors tended to be more conservative in the original regression model, except in cases where the standard error was greater than 1.</p>
+<pre class="r"><code>#class_diags function from class
+class_diag&lt;-function(probs,truth){
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  f1=2*(sens*ppv)/(sens+ppv)
+
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE){
+    truth&lt;-as.numeric(truth)-1}
+  
+  #CALCULATE EXACT AUC
+  ord&lt;-order(probs, decreasing=TRUE)
+  probs &lt;- probs[ord]; truth &lt;- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+  TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+  
+  n &lt;- length(TPR)
+  auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,f1,auc)
+}
+#end class_diags function from class
+
+gyms$Prop_LowIncome_c &lt;- gyms$Prop_LowIncome - mean(gyms$Prop_LowIncome, na.rm = T)
+gyms$gym_square_footage_c &lt;- gyms$gym_square_footage - mean(gyms$gym_square_footage, na.rm = T)
+
+gyms$has_other_purpose &lt;- as.factor(gyms$has_other_purpose)
+gyms_lm &lt;- glm(has_other_purpose ~ (Prop_LowIncome_c + gym_square_footage_c + Borough), data = gyms, family = binomial)
+summary(gyms_lm)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = has_other_purpose ~ (Prop_LowIncome_c +
+gym_square_footage_c +
+## Borough), family = binomial, data = gyms)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -1.3276 -0.9537 -0.5152 1.1564 3.0233
+##
+## Coefficients:
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -1.222e+00 7.505e-02 -16.279 &lt; 2e-16 ***
+## Prop_LowIncome_c 5.221e-01 1.825e-01 2.861 0.00422 **
+## gym_square_footage_c -4.938e-04 2.165e-05 -22.812 &lt;
+2e-16 ***
+## BoroughBrooklyn 5.413e-02 9.241e-02 0.586 0.55803
+## BoroughManhattan 2.128e-01 9.970e-02 2.135 0.03278 *
+## BoroughQueens 2.249e-01 1.046e-01 2.150 0.03156 *
+## BoroughStaten Island 1.288e-01 1.737e-01 0.742 0.45816
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for binomial family taken to be 1)
+##
+## Null deviance: 6442.5 on 5242 degrees of freedom
+## Residual deviance: 5617.5 on 5236 degrees of freedom
+## AIC: 5631.5
+##
+## Number of Fisher Scoring iterations: 5</code></pre>
+<pre class="r"><code>exp(coef(gyms_lm))</code></pre>
+<pre><code>## (Intercept) Prop_LowIncome_c gym_square_footage_c
+BoroughBrooklyn
+## 0.2946953 1.6855389 0.9995063 1.0556246
+## BoroughManhattan BoroughQueens BoroughStaten Island
+## 1.2371912 1.2522081 1.1375091</code></pre>
+<pre class="r"><code>prob &lt;- predict(gyms_lm, fit = &quot;response&quot;)
+pred &lt;- ifelse(prob &gt; .5, &quot;True&quot;, &quot;False&quot;)
+
+#class diags and other computed values
+class_diag(prob, gyms$has_other_purpose)</code></pre>
+<pre><code>##         acc sens spec ppv  f1     auc
+## Y 0.6957849    0    1 NaN NaN 0.75376</code></pre>
+<pre class="r"><code>#confusion matrix
+table(truth = gyms$has_other_purpose, prediction = pred) %&gt;% addmargins</code></pre>
+<pre><code>##      prediction
+## truth False  Sum
+##   N    3648 3648
+##   Y    1595 1595
+##   Sum  5243 5243</code></pre>
+<pre class="r"><code>3648/5243</code></pre>
+<pre><code>## [1] 0.6957849</code></pre>
+<pre class="r"><code>#density plot
+logit &lt;- predict(gyms_lm, type=&quot;link&quot;)
+gyms_df &lt;- data.frame(gyms$has_other_purpose, logit)
+ggplot(gyms_df, aes(logit, fill = gyms.has_other_purpose, color = gyms.has_other_purpose, alpha = 0.5)) + geom_density()</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#ROC plot
+library(plotROC)
+
+gyms1 &lt;- gyms %&gt;% select(has_other_purpose, Prop_LowIncome_c, gym_square_footage_c, Borough) %&gt;% na.omit()
+gyms1 &lt;- gyms1 %&gt;% mutate(y = ifelse(has_other_purpose == &quot;Y&quot;, 1, 0))
+
+gyms1$prob &lt;- prob
+gyms1$predicted &lt;- ifelse(gyms1$prob &gt; .5, &quot;Y&quot;, &quot;N&quot;)
+length(gyms1$y)</code></pre>
+<pre><code>## [1] 5243</code></pre>
+<pre class="r"><code>ROCplot &lt;- ggplot(gyms1) + geom_roc(aes(d = y, m = prob), n.cuts = 0) 
+ROCplot</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-6-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.7537468</code></pre>
+<p>The odds that a physical education space which is average-sized and from a school with an average amount of low income students has another purpose is 29%. The odds that a Brooklyn-based average-sized physical education space from a school with an average amount of low income students has another purpose is 1.06 times higher than that of one from the Bronx. The odds that a Manhattan-based average-sized physical education space from a school with an average amount of low income students has another purpose is 1.24 times higher than that of one from the Bronx. The odds that a Queens-based average-sized physical education space from a school with an average amount of low income students has another purpose is 1.25 times higher than that of one from the Bronx. The odds that a Staten Island-based average-sized physical education space from a school with an average amount of low income students has another purpose is 1.38 times higher than that of one from the Bronx. For all the previous statements, Prop_LowIncome_c and gym_square_footage_c were controlled for. Controlling for borough and Prop_LowIncome_c, for every 1-unit increase in gym_square_footage_c, odds of the space having another purpose change by 0.999. Controlling for borough and gym_square_footage_c, for every 1-unit increase in Prop_LowIncome_c, odds of the space having another purpose change by 1.686.</p>
+<p>The AUC for this model was found to be 0.7537, which is a fair AUC. The ACC is 0.70, however, both the True Positivity Rate and the Precision are 0, as there were no spaces correctly predicted as true. The True Negativity Rate was also 0.70. This and the low AUC prove that this is not a very effective model for predicting whether a space is used for another purpose. It was possible to predict that the AUC would be low, as the logit plot had a large amount of physical education spaces shaded in in the portion in both the “Y” and “N” has_other_purpose category. In addition, looking at the ROC plot itself, it is very curved and not close to the left side at all, indicating that the tradeoff between sensitivity and specificity is not very favorable, and that the model isn’t great.</p>
+<pre class="r"><code>gyms_w &lt;- gyms %&gt;% select(-(1:4), -location, -tot_enrollment_c)
+gyms_lm_all &lt;- glm(has_other_purpose ~ (.), data = gyms_w, family = binomial)
+summary(gyms_lm_all)</code></pre>
+<pre><code>##
+## Call:
+## glm(formula = has_other_purpose ~ (.), family =
+binomial, data = gyms_w)
+##
+## Deviance Residuals:
+## Min 1Q Median 3Q Max
+## -1.6627 -0.2402 0.0000 0.0000 3.3010
+##
+## Coefficients: (3 not defined because of singularities)
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -1.862e+01 2.895e+03 -0.006 0.99487
+## tot_enrollment 1.389e+00 1.102e+00 1.260 0.20749
+## num_female -1.392e+00 1.102e+00 -1.264 0.20633
+## num_male -1.395e+00 1.102e+00 -1.266 0.20535
+## Number_Asian 9.826e-04 1.446e-03 0.679 0.49688
+## Number_Black 1.001e-03 1.402e-03 0.714 0.47530
+## Number_Hispanic 2.524e-03 1.524e-03 1.656 0.09773 .
+## Number_Categories_Unrepresented 2.346e-03 5.772e-03
+0.406 0.68444
+## Number_White NA NA NA NA
+## Num_Students_With_Disabilities 1.818e-03 1.538e-03 1.182
+0.23707
+## Num_English_Lang_Learners 3.208e-03 1.311e-03 2.447
+0.01441 *
+## Num_LowIncome 3.870e-04 1.902e-03 0.203 0.83879
+## BoroughBrooklyn 1.010e+00 3.167e-01 3.189 0.00143 **
+## BoroughManhattan 4.087e-01 3.598e-01 1.136 0.25604
+## BoroughQueens 1.121e+00 3.557e-01 3.152 0.00162 **
+## BoroughStaten Island 1.328e+00 4.414e-01 3.009 0.00262
+**
+## gradesElementary -6.080e-01 1.050e+00 -0.579 0.56267
+## gradesHigh school -1.860e+00 1.082e+00 -1.719 0.08559 .
+## gradesJunior High-Intermediate-Middle -1.754e+00
+1.104e+00 -1.590 0.11194
+## gradesK-12 all grades -9.735e-01 1.174e+00 -0.829
+0.40695
+## gradesK-8 -1.044e+00 1.099e+00 -0.950 0.34217
+## gradesSecondary School -9.838e-01 1.125e+00 -0.874
+0.38193
+## gym_square_footage 9.124e-05 4.460e-05 2.045 0.04081 *
+## gym_room_functionAUXILIARY EXERCISE ROOM 6.464e-01
+3.411e+03 0.000 0.99985
+## gym_room_functionDANCE ROOM 6.534e-01 3.070e+03 0.000
+0.99983
+## gym_room_functionFIELD HOUSE 9.761e-01 1.186e+04 0.000
+0.99993
+## gym_room_functionGYM 1.902e+01 2.895e+03 0.007 0.99476
+## gym_room_functionMULTI-PURPOSE CLASSROOM 4.962e+01
+2.952e+03 0.017 0.98659
+## gym_room_functionMULTI-PURPOSE ROOM 5.852e+01 2.958e+03
+0.020 0.98422
+## gym_room_functionPLAYROOM 1.984e+01 2.895e+03 0.007
+0.99453
+## gym_room_functionWEIGHT ROOM 1.289e+00 3.159e+03 0.000
+0.99967
+## sharedY -1.231e+00 2.198e-01 -5.598 2.17e-08 ***
+## number_gyms -1.535e-02 2.445e-02 -0.628 0.53004
+## prop_female 2.079e-01 2.522e+00 0.082 0.93431
+## econ_as_num -2.965e-02 1.063e-02 -2.790 0.00528 **
+## UnderrepresentedProportion 3.632e-02 3.043e-01 0.119
+0.90499
+## Prop_LowIncome 1.071e+00 1.346e+00 0.796 0.42601
+## Prop_LowIncome_c NA NA NA NA
+## gym_square_footage_c NA NA NA NA
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## (Dispersion parameter for binomial family taken to be 1)
+##
+## Null deviance: 6442.5 on 5242 degrees of freedom
+## Residual deviance: 1014.4 on 5207 degrees of freedom
+## AIC: 1086.4
+##
+## Number of Fisher Scoring iterations: 20</code></pre>
+<pre class="r"><code>exp(coef(gyms_lm_all))</code></pre>
+<pre><code>## (Intercept) tot_enrollment
+## 8.162202e-09 4.009901e+00
+## num_female num_male
+## 2.484688e-01 2.477664e-01
+## Number_Asian Number_Black
+## 1.000983e+00 1.001001e+00
+## Number_Hispanic Number_Categories_Unrepresented
+## 1.002527e+00 1.002349e+00
+## Number_White Num_Students_With_Disabilities
+## NA 1.001820e+00
+## Num_English_Lang_Learners Num_LowIncome
+## 1.003214e+00 1.000387e+00
+## BoroughBrooklyn BoroughManhattan
+## 2.745664e+00 1.504815e+00
+## BoroughQueens BoroughStaten Island
+## 3.068295e+00 3.774034e+00
+## gradesElementary gradesHigh school
+## 5.444433e-01 1.557038e-01
+## gradesJunior High-Intermediate-Middle gradesK-12 all
+grades
+## 1.730044e-01 3.777410e-01
+## gradesK-8 gradesSecondary School
+## 3.520378e-01 3.738969e-01
+## gym_square_footage gym_room_functionAUXILIARY EXERCISE
+ROOM
+## 1.000091e+00 1.908676e+00
+## gym_room_functionDANCE ROOM gym_room_functionFIELD HOUSE
+## 1.922008e+00 2.653969e+00
+## gym_room_functionGYM gym_room_functionMULTI-PURPOSE
+CLASSROOM
+## 1.821807e+08 3.552708e+21
+## gym_room_functionMULTI-PURPOSE ROOM
+gym_room_functionPLAYROOM
+## 2.592290e+25 4.138115e+08
+## gym_room_functionWEIGHT ROOM sharedY
+## 3.629747e+00 2.920897e-01
+## number_gyms prop_female
+## 9.847659e-01 1.231041e+00
+## econ_as_num UnderrepresentedProportion
+## 9.707886e-01 1.036984e+00
+## Prop_LowIncome Prop_LowIncome_c
+## 2.919222e+00 NA
+## gym_square_footage_c
+## NA</code></pre>
+<pre class="r"><code>prob_all &lt;- predict(gyms_lm_all, fit = &quot;response&quot;)
+pred_all &lt;- ifelse(prob_all &gt; .5, &quot;True&quot;, &quot;False&quot;)
+class_diag(prob_all, gyms$has_other_purpose)</code></pre>
+<pre><code>## acc sens spec ppv f1 auc
+## Y 0.968148 0.8959248 0.9997259 0.9993007 0.9447934
+0.9866025</code></pre>
+<pre class="r"><code>#10-fold CV
+k=10
+gyms_w_random &lt;- gyms_w[sample(nrow(gyms_w)),]
+folds &lt;- cut(seq(1:nrow(gyms_w_random)), breaks = k, labels = F)
+all_class_diags &lt;- data.frame()
+for(i in 1:k){
+  train &lt;- gyms_w_random[folds != i, ]
+  test &lt;- gyms_w_random[folds == i, ]
+  truth_2 &lt;- test$has_other_purpose 
+  fold_fit &lt;- glm(has_other_purpose ~ (.), train, family = &quot;binomial&quot;)
+  probs_2 &lt;- predict(fold_fit, newdata = test, family = &quot;response&quot;)
+  all_class_diags &lt;- rbind(all_class_diags, class_diag(probs_2, truth_2))
+}
+all_class_diags %&gt;% summarize_all(mean)</code></pre>
+<pre><code>## acc sens spec ppv f1 auc
+## 1 0.9675838 0.8949591 0.9994638 0.9985185 0.9436491
+0.9843442</code></pre>
+<pre class="r"><code>#LASSO
+resp &lt;- as.matrix(gyms_w$has_other_purpose)
+gyms_preds &lt;- model.matrix(gyms_lm_all)[,-1]
+cv_gyms &lt;- cv.glmnet(gyms_preds, resp, family = &quot;binomial&quot;)
+lasso_fit &lt;- glmnet(gyms_preds, resp, family = &quot;binomial&quot;, lambda = cv_gyms$lambda.1se)
+coef(lasso_fit)</code></pre>
+<pre><code>## 39 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                                                     s0
+## (Intercept)                              -2.484089e+00
+## tot_enrollment                           -6.199433e-04
+## num_female                                .           
+## num_male                                 -3.650777e-04
+## Number_Asian                              .           
+## Number_Black                             -3.240313e-04
+## Number_Hispanic                           .           
+## Number_Categories_Unrepresented           .           
+## Number_White                              .           
+## Num_Students_With_Disabilities            .           
+## Num_English_Lang_Learners                 .           
+## Num_LowIncome                             .           
+## BoroughBrooklyn                           1.983752e-01
+## BoroughManhattan                          .           
+## BoroughQueens                             6.372442e-01
+## BoroughStaten Island                      4.485875e-01
+## gradesElementary                          5.654904e-01
+## gradesHigh school                        -2.874006e-01
+## gradesJunior High-Intermediate-Middle    -2.262690e-01
+## gradesK-12 all grades                     .           
+## gradesK-8                                 .           
+## gradesSecondary School                    .           
+## gym_square_footage                        1.232988e-07
+## gym_room_functionAUXILIARY EXERCISE ROOM -1.099211e+00
+## gym_room_functionDANCE ROOM              -1.821709e+00
+## gym_room_functionFIELD HOUSE              .           
+## gym_room_functionGYM                      5.669337e-01
+## gym_room_functionMULTI-PURPOSE CLASSROOM  9.027569e+00
+## gym_room_functionMULTI-PURPOSE ROOM       9.066871e+00
+## gym_room_functionPLAYROOM                 1.568931e+00
+## gym_room_functionWEIGHT ROOM             -1.171461e+00
+## sharedY                                  -9.276603e-01
+## number_gyms                               .           
+## prop_female                               .           
+## econ_as_num                              -5.559919e-04
+## UnderrepresentedProportion                1.890999e-02
+## Prop_LowIncome                            .           
+## Prop_LowIncome_c                          .           
+## gym_square_footage_c                      2.343825e-05</code></pre>
+<pre class="r"><code>gyms_probs_lasso &lt;- predict(lasso_fit, gyms_preds, type = &quot;response&quot;)
+class_diag(gyms_probs_lasso, gyms_w$has_other_purpose)</code></pre>
+<pre><code>##         acc     sens spec ppv        f1       auc
+## Y 0.9671944 0.892163    1   1 0.9430086 0.9848323</code></pre>
+<pre class="r"><code>#redone 10-fold CV
+gyms_w$brooklyn &lt;- gyms_preds[, &quot;BoroughBrooklyn&quot;]
+gyms_w$staten &lt;- gyms_preds[, &quot;BoroughStaten Island&quot;]
+gyms_w$queens &lt;- gyms_preds[, &quot;BoroughQueens&quot;]
+gyms_w$elem &lt;- gyms_preds[, &quot;gradesElementary&quot;]
+gyms_w$high &lt;- gyms_preds[, &quot;gradesHigh school&quot;]
+gyms_w$middle &lt;- gyms_preds[, &quot;gradesJunior High-Intermediate-Middle&quot;]
+gyms_w$aux &lt;- gyms_preds[, &quot;gym_room_functionAUXILIARY EXERCISE ROOM&quot;]
+gyms_w$dance &lt;- gyms_preds[, &quot;gym_room_functionDANCE ROOM&quot;]
+gyms_w$field &lt;- gyms_preds[, &quot;gym_room_functionFIELD HOUSE&quot;]
+gyms_w$gym &lt;- gyms_preds[, &quot;gym_room_functionGYM&quot;]
+gyms_w$multiclass &lt;- gyms_preds[, &quot;gym_room_functionMULTI-PURPOSE CLASSROOM&quot;]
+gyms_w$multiroom &lt;- gyms_preds[, &quot;gym_room_functionMULTI-PURPOSE ROOM&quot;]
+gyms_w$play &lt;- gyms_preds[, &quot;gym_room_functionPLAYROOM&quot;]
+gyms_w$weight &lt;- gyms_preds[, &quot;gym_room_functionWEIGHT ROOM&quot;]
+gyms_w$sharedy &lt;- gyms_preds[, &quot;sharedY&quot;]
+
+gyms_w_random_2 &lt;- gyms_w[sample(nrow(gyms_w)),]
+all_class_diags_2 &lt;- data.frame()
+folds2 &lt;- cut(seq(1:nrow(gyms_w_random_2)), breaks = k,labels = F)
+for(i in 1:k){
+  train &lt;- gyms_w_random_2[folds2 != i, ]
+  test &lt;- gyms_w_random_2[folds2 == i, ]
+  truth_3 &lt;- test$has_other_purpose 
+  fold_fit2 &lt;- glm(has_other_purpose ~ brooklyn + staten + queens + elem + high + middle + aux + dance + field + gym + multiclass + multiroom + play + weight + tot_enrollment + num_male + Number_Black + Number_White + gym_square_footage + econ_as_num + UnderrepresentedProportion + sharedy, train, family = &quot;binomial&quot;)
+  probs_3 &lt;- predict(fold_fit2, newdata = test, family = &quot;response&quot;)
+  all_class_diags_2 &lt;- rbind(all_class_diags_2, class_diag(probs_3, truth_3))
+}
+all_class_diags_2 %&gt;% summarize_all(mean)</code></pre>
+<pre><code>## acc sens spec ppv f1 auc
+## 1 0.9670033 0.8924095 0.999449 0.9986395 0.9424218
+0.9847265</code></pre>
+<p>For the first logistic regression model, the accuracy was computed to be 0.968, the sensitivity 0.896, the specificity 0.999, the precision 0.999, and the AUC 0.987. It seems that using all the variables in the logistic regression model is a pretty good predictor of whether a gym will be multi-use or single use, as the AUC is extremely high. While the true positive rate is significantly lower than the true negative rate, which was close to perfect, the accuracy was still extremely high. In fact, the proportion classified as multi-use physical education spaces that actually are, the ppv, was also near-perfect at 0.999. All of these indicate that even though all the variables were used, the model is very good for the current data; however, we will need to check this model for overfitting.</p>
+<p>To test whether overfitting occured and how well this model works overall, a 10-fold CV with this model was performed. Average out-of-sample classification diagnostics remained very similar to the those found in the in-sample model - the ACC was 0.97, sensitivity was 0.9, specificity was 0.999, ppv was 0.998, and AUC was 0.98. This indicates that using all the variables does not result in overfitting, as all classification diagnostics remained relatively similar to what they were before. Therefore, using all the variables in the logistic regression model seems to result in a fairly accurate model.</p>
+<p>Next, LASSO was performed in order to test which variables must be retained to create a simple yet accurate model. The variables that were retained are BoroughBrooklyn, BoroughStaten Island, BoroughQueens, gradesElementary, gradesHigh school, gradesJuniorHigh-Intermediate-Middle, gym_square_footage, gym_room_functionAUXILIARY EXERCISE ROOM, gym_room_functionDANCE ROOM, gym_room_functionGYM, gym_room_functionMULTI-PURPOSE CLASSROOM, gym_room_functionMULTI-PURPOSE ROOM, gym_room_functionPLAYROOM, gym_room_functionWEIGHT ROOM, sharedY, and econ_as_num. It seems that all the categories for the gym_room_function with the exception of FIELD HOUSE were retained, meaning that the gym_room_function. for the most part, is very important in correctly predicting whether the physical education space. This is very apparent with the multi purpose rooms, as those have in the descriptor that they have dual purposes, and this is apparent in how large the values obtained from LASSO are. Both of the secondary school indicators are in the negatives, meaning that schools have more specialized spaces for physical education as children get older. This is what I had expected. In addition, the weight rooms, dance rooms, and auxiliary exercise rooms have a negative result from LASSO as well, which makes sense since those are generally used for specialized purposes.</p>
+<p>The 10-fold CV performed based on a model with only variables selected by LASSO performed very similarly compared to the other models that were presented, which I believe is because the LASSO picked most of the variables as relevant to the simple but effective model. I think that because the original model which used all the variables worked so well as a predictor, the LASSO model’s AUC, PPV, sensitivity, and specificity stayed similar to that one, as it also used many variables. All these values may have also remained very similar to each other because this dataset has so many observations. The 10-fold CV based on the LASSO model, however, had much better AUC and other classification diagnostics than the model above, which solely used Prop_LowIncome, gym_square_footage, and Borough as predictors. It’s interesting because I had believed that Borough would play a much bigger role in the predictor of whether a gym space is multi-use or not; however, it is evident from the models above that the category the gym space falls into is a more accurate predictor of whether it is a multi-use space.</p>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="/js/docs.min.js"></script>
+<script src="/js/main.js"></script>
+
+<script src="/js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

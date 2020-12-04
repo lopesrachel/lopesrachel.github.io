@@ -1,0 +1,26 @@
+---
+title: Actual First Post
+author: ''
+date: '2020-12-04'
+slug: actual-first-post
+categories: []
+tags: []
+description: ''
+---
+
+This is a post apparently.
+
+```{R}
+
+print("Here's an R code chunk.")
+
+```
+
+```{python}
+
+print("And here's a python code chunk.")
+
+```
+
+Here's an image!
+![](/post/2020-12-04-actual-first-post_files/01c1c5978016120df88144866a222681853b7af578.jpg)

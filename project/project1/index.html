@@ -1,0 +1,4236 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Rachel Lopes" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
+    <title>Project 1: Exploratory Data Analysis</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/post/">BLOG</a></li>
+        
+        <li><a href="/projects/">PROJECTS</a></li>
+        
+        <li><a href="/resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/project/project1/">Project 1: Exploratory Data Analysis</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+<link href="/rmarkdown-libs/lightable/lightable.css" rel="stylesheet" />
+
+
+<div id="introduction" class="section level4">
+<h4>0. Introduction</h4>
+<p>The datasets that I have chosen are both from the New York City open datasets database. One is a survey of the demographics and SES attributes of schools in Manhattan, and the other is an assessment of the amount of space students at schools across Manhattan have for physical education, as well as what types of physical education spaces are available to them and whether these spaces are shared. New York is a fairly small, extremely urbanized city, and I imagine that there isn’t too much space for schools to build out and have lots of land, unlike schools in Texas. Therefore, I was interested in seeing how much space is allocated for physical education development in various Boroughs around New York City, and whether the amount of physical education spaces schools have is affected by the varying socioeconomic statuses found among the different Boroughs. I expect the Economic Need Index to be inversely correlated with both the amount of physical education space alloted as well as the number of rooms for physical education allotted.</p>
+</div>
+<div id="tidying-rearranging-widelong" class="section level4">
+<h4>1. Tidying: Rearranging Wide/Long</h4>
+<pre class="r"><code>library(tidyverse)
+library(kableExtra)
+library(factoextra)
+phys_ed &lt;- read_csv(&quot;pe_space.csv&quot;)
+names(phys_ed)[2:16] &lt;- c(&quot;district&quot;, &quot;admin_district&quot;, &quot;ATS&quot;, 
+    &quot;school_name&quot;, &quot;grades&quot;, &quot;ID&quot;, &quot;name&quot;, &quot;ownership&quot;, &quot;room&quot;, 
+    &quot;gym_square_footage&quot;, &quot;gym_room_function&quot;, &quot;shared&quot;, &quot;location&quot;, 
+    &quot;has_other_purpose&quot;, &quot;loc&quot;)
+phys_ed &lt;- phys_ed %&gt;% select(-c(district, admin_district, school_name, 
+    ID, ownership, name, room, loc))
+demographics &lt;- read_csv(&quot;demographics.csv&quot;)
+names(demographics)[2:40] &lt;- c(&quot;school_name&quot;, &quot;year&quot;, &quot;tot_enrollment&quot;, 
+    &quot;prek&quot;, &quot;kinder&quot;, &quot;first&quot;, &quot;second&quot;, &quot;third&quot;, &quot;fourth&quot;, &quot;fifth&quot;, 
+    &quot;sixth&quot;, &quot;seventh&quot;, &quot;eighth&quot;, &quot;ninth&quot;, &quot;tenth&quot;, &quot;eleventh&quot;, 
+    &quot;twelfth&quot;, &quot;num_female&quot;, &quot;percent_female&quot;, &quot;num_male&quot;, &quot;percent_male&quot;, 
+    &quot;Number_Asian&quot;, &quot;percent_asian&quot;, &quot;Number_Black&quot;, &quot;percent_black&quot;, 
+    &quot;Number_Hispanic&quot;, &quot;percent_hispanic&quot;, &quot;Number_Categories_Unrepresented&quot;, 
+    &quot;percent_mult_race&quot;, &quot;Number_White&quot;, &quot;percent_white&quot;, &quot;Num_Students_With_Disabilities&quot;, 
+    &quot;percent_students_with_disabilities&quot;, &quot;Num_English_Lang_Learners&quot;, 
+    &quot;percent_english_lang_learners&quot;, &quot;Num_LowIncome&quot;, &quot;percent_poverty&quot;, 
+    &quot;Econ_Need_Index&quot;)
+demographics &lt;- demographics %&gt;% select(-c(percent_female, percent_male, 
+    percent_asian, percent_black, percent_hispanic, percent_mult_race, 
+    percent_white, percent_english_lang_learners, percent_poverty, 
+    percent_students_with_disabilities, prek, kinder, first, 
+    second, third, fourth, fifth, sixth, seventh, eighth, ninth, 
+    tenth, eleventh, twelfth))
+demographics &lt;- demographics %&gt;% filter(year == &quot;2016-17&quot;)</code></pre>
+<p>Since my data is already tidy, I did not use this space to tidy any data. Rather, since my datasets contained many variables, I ommitted variables that I considered irrelevant to this project, such as the amount of students in each grade as well as the percentage columns, as those columns were available in numerical form as well. In addition, since the dataset contained many variables with spaces in their names, I deleted the spaces so as to make later wrangling easier, as R does not handle spaces in column names well.</p>
+</div>
+<div id="joiningmerging" class="section level4">
+<h4>2. Joining/Merging</h4>
+<pre class="r"><code>nrow(demographics)</code></pre>
+<pre><code>## [1] 1823</code></pre>
+<pre class="r"><code>nrow(phys_ed)</code></pre>
+<pre><code>## [1] 7158</code></pre>
+<pre class="r"><code>joined_set &lt;- demographics %&gt;% inner_join(phys_ed, by = c(DBN = &quot;ATS&quot;))
+joined_set &lt;- joined_set %&gt;% unique()
+joined_set &lt;- joined_set %&gt;% na.omit()
+nrow(joined_set)</code></pre>
+<pre><code>## [1] 6859</code></pre>
+<p>I chose to use an inner join to join my datasets. I wanted to ensure that only schools with both demographic information and physical education information were considered in my data. I also chose to use the unique function in order to ensure that the lines in this dataset were identifiably different from each other. Lastly, I omitted NA values from my dataset, which resulted in the loss of rows with incomplete information, whether it originated from the physical education dataset or the demographics dataset. The demographics dataset originally contained 1823 rows, the phys_ed contained 7158 rows, and the end dataset contains 6859 rows. Schools without complete data in both datasets were omitted, so this dataset does not contain a full profile of all schools in the 5 New York City boroughs. If certain boroughs had a pattern of missing values, this could skew the results against that borough, as the dataset would have less information concerning that borough. This may result in an inaccurate socioeconomic profile or inaccurate correlations between physical education spaces and socioeconomic information by borough.</p>
+</div>
+<div id="wrangling" class="section level4">
+<h4>3. Wrangling</h4>
+<pre class="r"><code># new columns for female prop of schools and number of total
+# gyms per school
+number_gyms &lt;- joined_set %&gt;% group_by(school_name) %&gt;% summarize(number_gyms = n())
+fem_vs_male &lt;- joined_set %&gt;% group_by(school_name) %&gt;% summarize(prop_female = num_female/tot_enrollment) %&gt;% 
+    arrange(desc(prop_female))
+glimpse(fem_vs_male)</code></pre>
+<pre><code>## Rows: 6,859
+## Columns: 2
+## Groups: school_name [1,574]
+## $ school_name &lt;chr&gt; &quot;Urban Assembly Institute of Math and Science for Y&quot;, &quot;...
+## $ prop_female &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...</code></pre>
+<pre class="r"><code>glimpse(number_gyms)</code></pre>
+<pre><code>## Rows: 1,574
+## Columns: 2
+## $ school_name &lt;chr&gt; &quot;47 The American Sign Language and English Secondar&quot;, &quot;...
+## $ number_gyms &lt;int&gt; 3, 5, 2, 8, 3, 8, 7, 4, 6, 4, 6, 6, 3, 5, 16, 3, 5, 4, ...</code></pre>
+<pre class="r"><code>joined_set &lt;- joined_set %&gt;% left_join(number_gyms) %&gt;% arrange(DBN)
+joined_set &lt;- joined_set %&gt;% left_join(fem_vs_male) %&gt;% unique()
+
+# made need index column a double
+econ_as_num &lt;- joined_set %&gt;% separate(Econ_Need_Index, into = c(&quot;econ_index&quot;), 
+    sep = &quot;%&quot;) %&gt;% select(econ_index) %&gt;% unlist() %&gt;% as.double()
+joined_set &lt;- joined_set %&gt;% mutate(econ_as_num) %&gt;% select(-Econ_Need_Index)
+
+# new column for Underrepresented_ proportion
+UnderrepresentedPercentage &lt;- joined_set %&gt;% pivot_longer(c(Number_Black, 
+    Number_Hispanic, Number_Categories_Unrepresented), names_to = &quot;Underrepresented_Groups&quot;, 
+    values_to = &quot;Count_By_Underrepresented_Group&quot;) %&gt;% select(school_name, 
+    tot_enrollment, Underrepresented_Groups, Count_By_Underrepresented_Group) %&gt;% 
+    unique() %&gt;% group_by(school_name) %&gt;% summarize(UnderrepresentedProportion = sum(Count_By_Underrepresented_Group)/tot_enrollment) %&gt;% 
+    unique()
+glimpse(UnderrepresentedPercentage)</code></pre>
+<pre><code>## Rows: 1,577
+## Columns: 2
+## Groups: school_name [1,574]
+## $ school_name                &lt;chr&gt; &quot;47 The American Sign Language and Engli...
+## $ UnderrepresentedProportion &lt;dbl&gt; 0.9385475, 0.9219074, 0.5146520, 0.63787...</code></pre>
+<pre class="r"><code>joined_set &lt;- joined_set %&gt;% left_join(UnderrepresentedPercentage)
+
+# new column for proportion LowIncome
+joined_set &lt;- joined_set %&gt;% mutate(Prop_LowIncome = Num_LowIncome/tot_enrollment)
+glimpse(joined_set)</code></pre>
+<pre><code>## Rows: 6,919
+## Columns: 26
+## $ DBN                             &lt;chr&gt; &quot;01M015&quot;, &quot;01M015&quot;, &quot;01M019&quot;, &quot;01M0...
+## $ school_name                     &lt;chr&gt; &quot;P.S. 015 Roberto Clemente&quot;, &quot;P.S. ...
+## $ year                            &lt;chr&gt; &quot;2016-17&quot;, &quot;2016-17&quot;, &quot;2016-17&quot;, &quot;2...
+## $ tot_enrollment                  &lt;dbl&gt; 178, 178, 271, 271, 540, 540, 540, ...
+## $ num_female                      &lt;dbl&gt; 83, 83, 127, 127, 265, 265, 265, 17...
+## $ num_male                        &lt;dbl&gt; 95, 95, 144, 144, 275, 275, 275, 18...
+## $ Number_Asian                    &lt;dbl&gt; 14, 14, 24, 24, 175, 175, 175, 19, ...
+## $ Number_Black                    &lt;dbl&gt; 51, 51, 51, 51, 52, 52, 52, 102, 10...
+## $ Number_Hispanic                 &lt;dbl&gt; 105, 105, 180, 180, 264, 264, 264, ...
+## $ Number_Categories_Unrepresented &lt;dbl&gt; 4, 4, 1, 1, 22, 22, 22, 2, 2, 2, 5,...
+## $ Number_White                    &lt;dbl&gt; 4, 4, 15, 15, 27, 27, 27, 11, 11, 1...
+## $ Num_Students_With_Disabilities  &lt;dbl&gt; 51, 51, 88, 88, 116, 116, 116, 130,...
+## $ Num_English_Lang_Learners       &lt;dbl&gt; 12, 12, 9, 9, 93, 93, 93, 27, 27, 2...
+## $ Num_LowIncome                   &lt;dbl&gt; 152, 152, 207, 207, 315, 315, 315, ...
+## $ Borough                         &lt;chr&gt; &quot;Manhattan&quot;, &quot;Manhattan&quot;, &quot;Manhatta...
+## $ grades                          &lt;chr&gt; &quot;Elementary&quot;, &quot;Elementary&quot;, &quot;Elemen...
+## $ gym_square_footage              &lt;dbl&gt; 3243, 14953, 3942, 28121, 1080, 400...
+## $ gym_room_function               &lt;chr&gt; &quot;GYMNASIUM&quot;, &quot;OUTDOOR YARD&quot;, &quot;GYMNA...
+## $ shared                          &lt;chr&gt; &quot;Y&quot;, &quot;Y&quot;, &quot;Y&quot;, &quot;Y&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, ...
+## $ location                        &lt;chr&gt; &quot;Inside&quot;, &quot;Outside&quot;, &quot;Inside&quot;, &quot;Out...
+## $ has_other_purpose               &lt;chr&gt; &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;Y&quot;, &quot;N&quot;, &quot;N&quot;, ...
+## $ number_gyms                     &lt;int&gt; 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,...
+## $ prop_female                     &lt;dbl&gt; 0.4662921, 0.4662921, 0.4686347, 0....
+## $ econ_as_num                     &lt;dbl&gt; 89.2, 89.2, 58.2, 58.2, 68.0, 68.0,...
+## $ UnderrepresentedProportion      &lt;dbl&gt; 0.8988764, 0.8988764, 0.8560886, 0....
+## $ Prop_LowIncome                  &lt;dbl&gt; 0.8539326, 0.8539326, 0.7638376, 0....</code></pre>
+<pre class="r"><code>joined_set %&gt;% summarize(Mean_Enrollment = mean(tot_enrollment), 
+    Mean_GymSqFootage = mean(gym_square_footage), Mean_NumberOfGyms = mean(number_gyms), 
+    Mean_ProportionofStudentsFemale = mean(prop_female), Mean_SchoolEconomicNeedIndex = mean(econ_as_num), 
+    Mean_ProportionofStudentsUnderrepresentedPopulations = mean(UnderrepresentedProportion), 
+    Mean_ProportionofStudentsinPoverty = mean(Prop_LowIncome), 
+    StandardDeviation_Enrollment = sd(tot_enrollment), StandardDeviation_GymSqFootage = sd(gym_square_footage), 
+    StandardDeviation_NumberOfGyms = sd(number_gyms), StandardDeviation_ProportionofStudentsFemale = sd(prop_female), 
+    StandardDeviation_SchoolEconomicNeedIndex = sd(econ_as_num), 
+    StandardDeviation_ProportionofStudentsUnderrepresentedPopulations = sd(UnderrepresentedProportion), 
+    StandardDeviation_ProportionofStudentsinPoverty = sd(Prop_LowIncome), 
+    Min_Enrollment = min(tot_enrollment), Min_GymSqFootage = min(gym_square_footage), 
+    Min_NumberOfGyms = min(number_gyms), Min_ProportionofStudentsFemale = min(prop_female), 
+    Min_SchoolEconomicNeedIndex = min(econ_as_num), Min_ProportionofStudentsUnderrepresentedPopulations = min(UnderrepresentedProportion), 
+    Min_ProportionofStudentsinPoverty = min(Prop_LowIncome), 
+    Max_Enrollment = max(tot_enrollment), Max_GymSqFootage = max(gym_square_footage), 
+    Max_NumberOfGyms = max(number_gyms), Max_ProportionofStudentsFemale = max(prop_female), 
+    Max_SchoolEconomicNeedIndex = max(econ_as_num), Max_ProportionofStudentsUnderrepresentedPopulations = max(UnderrepresentedProportion), 
+    Max_ProportionofStudentsinPoverty = max(Prop_LowIncome), 
+    Quantile90th_Enrollment = quantile(tot_enrollment, 0.9), 
+    Quantile90th_GymSqFootage_90th = quantile(gym_square_footage, 
+        0.9), Quantile90th_NumberOfGyms = quantile(number_gyms, 
+        0.9), Quantile90th_ProportionofStudentsFemale = quantile(prop_female, 
+        0.9), Quantile90th_SchoolEconomicNeedIndex = quantile(econ_as_num, 
+        0.9), Quantile90th_ProportionofStudentsUnderrepresentedPopulations = quantile(UnderrepresentedProportion, 
+        0.9), Quantile90th_ProportionofStudentsinPoverty = quantile(Prop_LowIncome, 
+        0.9)) %&gt;% pivot_longer(contains(c(&quot;Mean&quot;, &quot;StandardDeviation&quot;, 
+    &quot;Min&quot;, &quot;Max&quot;, &quot;Quantile&quot;))) %&gt;% separate(name, into = c(&quot;Summary_Stat&quot;, 
+    &quot;Variable&quot;)) %&gt;% pivot_wider(names_from = Summary_Stat, values_from = value) %&gt;% 
+    kbl() %&gt;% kable_styling()</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Variable
+</th>
+<th style="text-align:right;">
+Mean
+</th>
+<th style="text-align:right;">
+StandardDeviation
+</th>
+<th style="text-align:right;">
+Min
+</th>
+<th style="text-align:right;">
+Max
+</th>
+<th style="text-align:right;">
+Quantile90th
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Enrollment
+</td>
+<td style="text-align:right;">
+622.2633329
+</td>
+<td style="text-align:right;">
+5.720391e+02
+</td>
+<td style="text-align:right;">
+55.0000000
+</td>
+<td style="text-align:right;">
+5.682000e+03
+</td>
+<td style="text-align:right;">
+1.075000e+03
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GymSqFootage
+</td>
+<td style="text-align:right;">
+9651.5574505
+</td>
+<td style="text-align:right;">
+2.957324e+04
+</td>
+<td style="text-align:right;">
+42.0000000
+</td>
+<td style="text-align:right;">
+4.600000e+05
+</td>
+<td style="text-align:right;">
+1.961540e+04
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NumberOfGyms
+</td>
+<td style="text-align:right;">
+8.0145975
+</td>
+<td style="text-align:right;">
+8.338924e+00
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+4.800000e+01
+</td>
+<td style="text-align:right;">
+1.900000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ProportionofStudentsFemale
+</td>
+<td style="text-align:right;">
+0.4521282
+</td>
+<td style="text-align:right;">
+1.177632e-01
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+1.000000e+00
+</td>
+<td style="text-align:right;">
+5.459588e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SchoolEconomicNeedIndex
+</td>
+<td style="text-align:right;">
+65.9511490
+</td>
+<td style="text-align:right;">
+1.932967e+01
+</td>
+<td style="text-align:right;">
+3.4000000
+</td>
+<td style="text-align:right;">
+9.830000e+01
+</td>
+<td style="text-align:right;">
+8.750000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ProportionofStudentsUnderrepresentedPopulations
+</td>
+<td style="text-align:right;">
+0.7794992
+</td>
+<td style="text-align:right;">
+2.964964e-01
+</td>
+<td style="text-align:right;">
+0.0357143
+</td>
+<td style="text-align:right;">
+4.707692e+00
+</td>
+<td style="text-align:right;">
+9.806867e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ProportionofStudentsinPoverty
+</td>
+<td style="text-align:right;">
+0.7304100
+</td>
+<td style="text-align:right;">
+1.908442e-01
+</td>
+<td style="text-align:right;">
+0.0291262
+</td>
+<td style="text-align:right;">
+1.000000e+00
+</td>
+<td style="text-align:right;">
+9.444444e-01
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># By Borough
+joined_set %&gt;% group_by(Borough) %&gt;% summarize(Mean_Enrollment = mean(tot_enrollment), 
+    Mean_GymSqFootage = mean(gym_square_footage), Mean_NumberOfGyms = mean(number_gyms), 
+    Mean_ProportionofStudentsFemale = mean(prop_female), Mean_SchoolEconomicNeedIndex = mean(econ_as_num), 
+    Mean_ProportionofStudentsUnderrepresentedPopulations = mean(UnderrepresentedProportion), 
+    Mean_ProportionofStudentsinPoverty = mean(Prop_LowIncome), 
+    StandardDeviation_Enrollment = sd(tot_enrollment), StandardDeviation_GymSqFootage = sd(gym_square_footage), 
+    StandardDeviation_NumberOfGyms = sd(number_gyms), StandardDeviation_ProportionofStudentsFemale = sd(prop_female), 
+    StandardDeviation_SchoolEconomicNeedIndex = sd(econ_as_num), 
+    StandardDeviation_ProportionofStudentsUnderrepresentedPopulations = sd(UnderrepresentedProportion), 
+    StandardDeviation_ProportionofStudentsinPoverty = sd(Prop_LowIncome), 
+    Min_Enrollment = min(tot_enrollment), Min_GymSqFootage = min(gym_square_footage), 
+    Min_NumberOfGyms = min(number_gyms), Min_ProportionofStudentsFemale = min(prop_female), 
+    Min_SchoolEconomicNeedIndex = min(econ_as_num), Min_ProportionofStudentsUnderrepresentedPopulations = min(UnderrepresentedProportion), 
+    Min_ProportionofStudentsinPoverty = min(Prop_LowIncome), 
+    Max_Enrollment = max(tot_enrollment), Max_GymSqFootage = max(gym_square_footage), 
+    Max_NumberOfGyms = max(number_gyms), Max_ProportionofStudentsFemale = max(prop_female), 
+    Max_SchoolEconomicNeedIndex = max(econ_as_num), Max_ProportionofStudentsUnderrepresentedPopulations = max(UnderrepresentedProportion), 
+    Max_ProportionofStudentsinPoverty = max(Prop_LowIncome), 
+    Quantile90th_Enrollment = quantile(tot_enrollment, 0.9), 
+    Quantile90th_GymSqFootage_90th = quantile(gym_square_footage, 
+        0.9), Quantile90th_NumberOfGyms = quantile(number_gyms, 
+        0.9), Quantile90th_ProportionofStudentsFemale = quantile(prop_female, 
+        0.9), Quantile90th_SchoolEconomicNeedIndex = quantile(econ_as_num, 
+        0.9), Quantile90th_ProportionofStudentsUnderrepresentedPopulations = quantile(UnderrepresentedProportion, 
+        0.9), Quantile90th_ProportionofStudentsinPoverty = quantile(Prop_LowIncome, 
+        0.9)) %&gt;% pivot_longer(contains(c(&quot;Mean&quot;, &quot;StandardDeviation&quot;, 
+    &quot;Min&quot;, &quot;Max&quot;, &quot;Quantile&quot;))) %&gt;% separate(name, into = c(&quot;Summary_Stat&quot;, 
+    &quot;Variable&quot;)) %&gt;% pivot_wider(names_from = Summary_Stat, values_from = value) %&gt;% 
+    arrange(Variable, desc(Mean)) %&gt;% kbl() %&gt;% kable_styling()</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Borough
+</th>
+<th style="text-align:left;">
+Variable
+</th>
+<th style="text-align:right;">
+Mean
+</th>
+<th style="text-align:right;">
+StandardDeviation
+</th>
+<th style="text-align:right;">
+Min
+</th>
+<th style="text-align:right;">
+Max
+</th>
+<th style="text-align:right;">
+Quantile90th
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+Enrollment
+</td>
+<td style="text-align:right;">
+8.798682e+02
+</td>
+<td style="text-align:right;">
+7.528746e+02
+</td>
+<td style="text-align:right;">
+55.0000000
+</td>
+<td style="text-align:right;">
+3.911000e+03
+</td>
+<td style="text-align:right;">
+1.377000e+03
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+Enrollment
+</td>
+<td style="text-align:right;">
+7.903716e+02
+</td>
+<td style="text-align:right;">
+6.226856e+02
+</td>
+<td style="text-align:right;">
+113.0000000
+</td>
+<td style="text-align:right;">
+4.463000e+03
+</td>
+<td style="text-align:right;">
+1.511000e+03
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+Enrollment
+</td>
+<td style="text-align:right;">
+6.098154e+02
+</td>
+<td style="text-align:right;">
+6.983413e+02
+</td>
+<td style="text-align:right;">
+88.0000000
+</td>
+<td style="text-align:right;">
+5.682000e+03
+</td>
+<td style="text-align:right;">
+1.022000e+03
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+Enrollment
+</td>
+<td style="text-align:right;">
+5.610798e+02
+</td>
+<td style="text-align:right;">
+3.354240e+02
+</td>
+<td style="text-align:right;">
+75.0000000
+</td>
+<td style="text-align:right;">
+2.979000e+03
+</td>
+<td style="text-align:right;">
+8.877000e+02
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+Enrollment
+</td>
+<td style="text-align:right;">
+4.738294e+02
+</td>
+<td style="text-align:right;">
+3.640582e+02
+</td>
+<td style="text-align:right;">
+74.0000000
+</td>
+<td style="text-align:right;">
+3.365000e+03
+</td>
+<td style="text-align:right;">
+6.990000e+02
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+GymSqFootage
+</td>
+<td style="text-align:right;">
+2.034917e+04
+</td>
+<td style="text-align:right;">
+5.913564e+04
+</td>
+<td style="text-align:right;">
+66.0000000
+</td>
+<td style="text-align:right;">
+4.600000e+05
+</td>
+<td style="text-align:right;">
+4.206500e+04
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+GymSqFootage
+</td>
+<td style="text-align:right;">
+1.244496e+04
+</td>
+<td style="text-align:right;">
+3.698284e+04
+</td>
+<td style="text-align:right;">
+72.0000000
+</td>
+<td style="text-align:right;">
+3.750000e+05
+</td>
+<td style="text-align:right;">
+2.924250e+04
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+GymSqFootage
+</td>
+<td style="text-align:right;">
+9.657570e+03
+</td>
+<td style="text-align:right;">
+2.764059e+04
+</td>
+<td style="text-align:right;">
+42.0000000
+</td>
+<td style="text-align:right;">
+3.053250e+05
+</td>
+<td style="text-align:right;">
+2.114800e+04
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+GymSqFootage
+</td>
+<td style="text-align:right;">
+9.500456e+03
+</td>
+<td style="text-align:right;">
+2.576129e+04
+</td>
+<td style="text-align:right;">
+56.0000000
+</td>
+<td style="text-align:right;">
+3.460000e+05
+</td>
+<td style="text-align:right;">
+2.216250e+04
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+GymSqFootage
+</td>
+<td style="text-align:right;">
+4.373971e+03
+</td>
+<td style="text-align:right;">
+8.321106e+03
+</td>
+<td style="text-align:right;">
+48.0000000
+</td>
+<td style="text-align:right;">
+1.020000e+05
+</td>
+<td style="text-align:right;">
+8.827000e+03
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+NumberOfGyms
+</td>
+<td style="text-align:right;">
+1.312034e+01
+</td>
+<td style="text-align:right;">
+1.546640e+01
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+4.800000e+01
+</td>
+<td style="text-align:right;">
+4.800000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+NumberOfGyms
+</td>
+<td style="text-align:right;">
+8.522284e+00
+</td>
+<td style="text-align:right;">
+8.614560e+00
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+4.400000e+01
+</td>
+<td style="text-align:right;">
+1.600000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+NumberOfGyms
+</td>
+<td style="text-align:right;">
+7.905220e+00
+</td>
+<td style="text-align:right;">
+7.721836e+00
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+3.200000e+01
+</td>
+<td style="text-align:right;">
+2.100000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+NumberOfGyms
+</td>
+<td style="text-align:right;">
+7.405405e+00
+</td>
+<td style="text-align:right;">
+7.530432e+00
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+3.800000e+01
+</td>
+<td style="text-align:right;">
+1.500000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+NumberOfGyms
+</td>
+<td style="text-align:right;">
+7.353107e+00
+</td>
+<td style="text-align:right;">
+7.049691e+00
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+3.900000e+01
+</td>
+<td style="text-align:right;">
+1.400000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+ProportionofStudentsFemale
+</td>
+<td style="text-align:right;">
+4.694786e-01
+</td>
+<td style="text-align:right;">
+1.343406e-01
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+1.000000e+00
+</td>
+<td style="text-align:right;">
+6.053905e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+ProportionofStudentsFemale
+</td>
+<td style="text-align:right;">
+4.514069e-01
+</td>
+<td style="text-align:right;">
+1.187525e-01
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+1.000000e+00
+</td>
+<td style="text-align:right;">
+5.454545e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+ProportionofStudentsFemale
+</td>
+<td style="text-align:right;">
+4.505749e-01
+</td>
+<td style="text-align:right;">
+1.151226e-01
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+1.000000e+00
+</td>
+<td style="text-align:right;">
+5.419696e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+ProportionofStudentsFemale
+</td>
+<td style="text-align:right;">
+4.446839e-01
+</td>
+<td style="text-align:right;">
+1.018382e-01
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+1.000000e+00
+</td>
+<td style="text-align:right;">
+5.198330e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+ProportionofStudentsFemale
+</td>
+<td style="text-align:right;">
+4.244606e-01
+</td>
+<td style="text-align:right;">
+1.089253e-01
+</td>
+<td style="text-align:right;">
+0.0000000
+</td>
+<td style="text-align:right;">
+6.109980e-01
+</td>
+<td style="text-align:right;">
+5.187970e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+ProportionofStudentsinPoverty
+</td>
+<td style="text-align:right;">
+8.245655e-01
+</td>
+<td style="text-align:right;">
+1.234421e-01
+</td>
+<td style="text-align:right;">
+0.2519894
+</td>
+<td style="text-align:right;">
+9.968750e-01
+</td>
+<td style="text-align:right;">
+9.691943e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+ProportionofStudentsinPoverty
+</td>
+<td style="text-align:right;">
+7.528665e-01
+</td>
+<td style="text-align:right;">
+1.682320e-01
+</td>
+<td style="text-align:right;">
+0.0688705
+</td>
+<td style="text-align:right;">
+9.908884e-01
+</td>
+<td style="text-align:right;">
+9.447960e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+ProportionofStudentsinPoverty
+</td>
+<td style="text-align:right;">
+6.802489e-01
+</td>
+<td style="text-align:right;">
+2.475495e-01
+</td>
+<td style="text-align:right;">
+0.0291262
+</td>
+<td style="text-align:right;">
+1.000000e+00
+</td>
+<td style="text-align:right;">
+9.324759e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+ProportionofStudentsinPoverty
+</td>
+<td style="text-align:right;">
+6.799874e-01
+</td>
+<td style="text-align:right;">
+1.662010e-01
+</td>
+<td style="text-align:right;">
+0.1811377
+</td>
+<td style="text-align:right;">
+9.739292e-01
+</td>
+<td style="text-align:right;">
+8.896104e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+ProportionofStudentsinPoverty
+</td>
+<td style="text-align:right;">
+5.912453e-01
+</td>
+<td style="text-align:right;">
+1.791068e-01
+</td>
+<td style="text-align:right;">
+0.2135231
+</td>
+<td style="text-align:right;">
+9.792531e-01
+</td>
+<td style="text-align:right;">
+7.739075e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+ProportionofStudentsUnderrepresentedPopulations
+</td>
+<td style="text-align:right;">
+9.508110e-01
+</td>
+<td style="text-align:right;">
+2.474762e-01
+</td>
+<td style="text-align:right;">
+0.1691843
+</td>
+<td style="text-align:right;">
+4.707692e+00
+</td>
+<td style="text-align:right;">
+9.888734e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+ProportionofStudentsUnderrepresentedPopulations
+</td>
+<td style="text-align:right;">
+7.849284e-01
+</td>
+<td style="text-align:right;">
+2.557567e-01
+</td>
+<td style="text-align:right;">
+0.0357143
+</td>
+<td style="text-align:right;">
+1.571667e+00
+</td>
+<td style="text-align:right;">
+9.811321e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+ProportionofStudentsUnderrepresentedPopulations
+</td>
+<td style="text-align:right;">
+7.625506e-01
+</td>
+<td style="text-align:right;">
+2.605938e-01
+</td>
+<td style="text-align:right;">
+0.0407643
+</td>
+<td style="text-align:right;">
+1.000000e+00
+</td>
+<td style="text-align:right;">
+9.718970e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+ProportionofStudentsUnderrepresentedPopulations
+</td>
+<td style="text-align:right;">
+6.766874e-01
+</td>
+<td style="text-align:right;">
+3.336104e-01
+</td>
+<td style="text-align:right;">
+0.1127983
+</td>
+<td style="text-align:right;">
+4.707692e+00
+</td>
+<td style="text-align:right;">
+9.594173e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+ProportionofStudentsUnderrepresentedPopulations
+</td>
+<td style="text-align:right;">
+4.823129e-01
+</td>
+<td style="text-align:right;">
+2.542763e-01
+</td>
+<td style="text-align:right;">
+0.0510671
+</td>
+<td style="text-align:right;">
+9.473684e-01
+</td>
+<td style="text-align:right;">
+8.437500e-01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+SchoolEconomicNeedIndex
+</td>
+<td style="text-align:right;">
+7.956004e+01
+</td>
+<td style="text-align:right;">
+1.216651e+01
+</td>
+<td style="text-align:right;">
+20.7000000
+</td>
+<td style="text-align:right;">
+9.830000e+01
+</td>
+<td style="text-align:right;">
+9.060000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+SchoolEconomicNeedIndex
+</td>
+<td style="text-align:right;">
+6.844129e+01
+</td>
+<td style="text-align:right;">
+1.525194e+01
+</td>
+<td style="text-align:right;">
+6.1000000
+</td>
+<td style="text-align:right;">
+9.560000e+01
+</td>
+<td style="text-align:right;">
+8.450000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+SchoolEconomicNeedIndex
+</td>
+<td style="text-align:right;">
+6.452625e+01
+</td>
+<td style="text-align:right;">
+2.267768e+01
+</td>
+<td style="text-align:right;">
+3.4000000
+</td>
+<td style="text-align:right;">
+9.650000e+01
+</td>
+<td style="text-align:right;">
+8.635000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+SchoolEconomicNeedIndex
+</td>
+<td style="text-align:right;">
+5.295199e+01
+</td>
+<td style="text-align:right;">
+1.484215e+01
+</td>
+<td style="text-align:right;">
+9.9000000
+</td>
+<td style="text-align:right;">
+9.690000e+01
+</td>
+<td style="text-align:right;">
+6.910000e+01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+SchoolEconomicNeedIndex
+</td>
+<td style="text-align:right;">
+5.029398e+01
+</td>
+<td style="text-align:right;">
+2.191231e+01
+</td>
+<td style="text-align:right;">
+16.9000000
+</td>
+<td style="text-align:right;">
+8.910000e+01
+</td>
+<td style="text-align:right;">
+7.290000e+01
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># By two variables, after recoding gym values so they are
+# standard
+joined_set &lt;- joined_set %&gt;% mutate(gym_room_function = recode(gym_room_function, 
+    `GYM/CAFETERIA` = &quot;GYM&quot;, GYMNASIUM = &quot;GYM&quot;, `GYM/AUD/CAFETERIA` = &quot;GYM&quot;, 
+    `GYMNASIUM/AUDITORIUM/DANCE ROOM` = &quot;GYM&quot;, `GYM/AUDITORIUM` = &quot;GYM&quot;, 
+    `PLAYROOM/CAFETERIA` = &quot;PLAYROOM&quot;, `MULTI-PURPOSE NON CLASSROOM` = &quot;MULTI-PURPOSE ROOM&quot;))
+
+joined_set %&gt;% group_by(Borough, gym_room_function) %&gt;% summarize(Mean_SquareFootageAllSpaces = mean(gym_square_footage), 
+    StandardDeviation_SquareFootageAllSpaces = sd(gym_square_footage), 
+    Median_SquareFootageAllSpaces = median(gym_square_footage), 
+    Min_SquareFootageAllSpaces = min(gym_square_footage), Max_SquareFootageAllSpaces = max(gym_square_footage), 
+    Quantile90th_SquareFootageAllSpaces = quantile(gym_square_footage, 
+        0.9)) %&gt;% pivot_longer(contains(c(&quot;Mean&quot;, &quot;Median&quot;, &quot;StandardDeviation&quot;, 
+    &quot;Min&quot;, &quot;Max&quot;, &quot;Quantile&quot;))) %&gt;% separate(name, into = c(&quot;Summary_Stat&quot;, 
+    &quot;Variable&quot;)) %&gt;% pivot_wider(names_from = Summary_Stat, values_from = value) %&gt;% 
+    relocate(Variable, .after = gym_room_function) %&gt;% arrange(gym_room_function, 
+    desc(Mean)) %&gt;% kbl() %&gt;% kable_styling()</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Borough
+</th>
+<th style="text-align:left;">
+gym_room_function
+</th>
+<th style="text-align:left;">
+Variable
+</th>
+<th style="text-align:right;">
+Mean
+</th>
+<th style="text-align:right;">
+Median
+</th>
+<th style="text-align:right;">
+StandardDeviation
+</th>
+<th style="text-align:right;">
+Min
+</th>
+<th style="text-align:right;">
+Max
+</th>
+<th style="text-align:right;">
+Quantile90th
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+ADAPTIVE PHYSICAL EDUCATION
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1133.4615
+</td>
+<td style="text-align:right;">
+875.0
+</td>
+<td style="text-align:right;">
+646.8577
+</td>
+<td style="text-align:right;">
+208
+</td>
+<td style="text-align:right;">
+1836
+</td>
+<td style="text-align:right;">
+1836.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+ADAPTIVE PHYSICAL EDUCATION
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+894.5000
+</td>
+<td style="text-align:right;">
+663.0
+</td>
+<td style="text-align:right;">
+927.6361
+</td>
+<td style="text-align:right;">
+133
+</td>
+<td style="text-align:right;">
+2632
+</td>
+<td style="text-align:right;">
+1876.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+ADAPTIVE PHYSICAL EDUCATION
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+884.1724
+</td>
+<td style="text-align:right;">
+648.0
+</td>
+<td style="text-align:right;">
+884.8048
+</td>
+<td style="text-align:right;">
+112
+</td>
+<td style="text-align:right;">
+4134
+</td>
+<td style="text-align:right;">
+1847.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+ADAPTIVE PHYSICAL EDUCATION
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+836.7143
+</td>
+<td style="text-align:right;">
+616.0
+</td>
+<td style="text-align:right;">
+779.3421
+</td>
+<td style="text-align:right;">
+84
+</td>
+<td style="text-align:right;">
+3776
+</td>
+<td style="text-align:right;">
+1488.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+ADAPTIVE PHYSICAL EDUCATION
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+637.8182
+</td>
+<td style="text-align:right;">
+610.5
+</td>
+<td style="text-align:right;">
+283.2916
+</td>
+<td style="text-align:right;">
+42
+</td>
+<td style="text-align:right;">
+1378
+</td>
+<td style="text-align:right;">
+699.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+ATHLETIC FIELD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+283730.7692
+</td>
+<td style="text-align:right;">
+259000.0
+</td>
+<td style="text-align:right;">
+112208.9969
+</td>
+<td style="text-align:right;">
+134000
+</td>
+<td style="text-align:right;">
+460000
+</td>
+<td style="text-align:right;">
+460000.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+ATHLETIC FIELD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+218782.3529
+</td>
+<td style="text-align:right;">
+210000.0
+</td>
+<td style="text-align:right;">
+91469.7415
+</td>
+<td style="text-align:right;">
+78600
+</td>
+<td style="text-align:right;">
+375000
+</td>
+<td style="text-align:right;">
+360000.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+ATHLETIC FIELD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+191438.1944
+</td>
+<td style="text-align:right;">
+200000.0
+</td>
+<td style="text-align:right;">
+70984.1440
+</td>
+<td style="text-align:right;">
+37700
+</td>
+<td style="text-align:right;">
+305325
+</td>
+<td style="text-align:right;">
+267500.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+ATHLETIC FIELD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+176909.0909
+</td>
+<td style="text-align:right;">
+200000.0
+</td>
+<td style="text-align:right;">
+93453.7875
+</td>
+<td style="text-align:right;">
+70000
+</td>
+<td style="text-align:right;">
+346000
+</td>
+<td style="text-align:right;">
+274000.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+ATHLETIC FIELD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+102000.0000
+</td>
+<td style="text-align:right;">
+102000.0
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+102000
+</td>
+<td style="text-align:right;">
+102000
+</td>
+<td style="text-align:right;">
+102000.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+AUXILIARY EXERCISE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1149.4216
+</td>
+<td style="text-align:right;">
+748.0
+</td>
+<td style="text-align:right;">
+2423.6207
+</td>
+<td style="text-align:right;">
+63
+</td>
+<td style="text-align:right;">
+24300
+</td>
+<td style="text-align:right;">
+1560.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+AUXILIARY EXERCISE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1005.3878
+</td>
+<td style="text-align:right;">
+910.0
+</td>
+<td style="text-align:right;">
+475.9984
+</td>
+<td style="text-align:right;">
+56
+</td>
+<td style="text-align:right;">
+1800
+</td>
+<td style="text-align:right;">
+1518.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+AUXILIARY EXERCISE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+974.2250
+</td>
+<td style="text-align:right;">
+861.0
+</td>
+<td style="text-align:right;">
+444.1764
+</td>
+<td style="text-align:right;">
+378
+</td>
+<td style="text-align:right;">
+2200
+</td>
+<td style="text-align:right;">
+1420.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+AUXILIARY EXERCISE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+972.6250
+</td>
+<td style="text-align:right;">
+1203.5
+</td>
+<td style="text-align:right;">
+539.1816
+</td>
+<td style="text-align:right;">
+66
+</td>
+<td style="text-align:right;">
+1564
+</td>
+<td style="text-align:right;">
+1410.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+AUXILIARY EXERCISE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+930.1071
+</td>
+<td style="text-align:right;">
+696.0
+</td>
+<td style="text-align:right;">
+589.5954
+</td>
+<td style="text-align:right;">
+104
+</td>
+<td style="text-align:right;">
+2001
+</td>
+<td style="text-align:right;">
+1823.9
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+DANCE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1099.2206
+</td>
+<td style="text-align:right;">
+1040.0
+</td>
+<td style="text-align:right;">
+355.1845
+</td>
+<td style="text-align:right;">
+486
+</td>
+<td style="text-align:right;">
+2132
+</td>
+<td style="text-align:right;">
+1674.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+DANCE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1089.0000
+</td>
+<td style="text-align:right;">
+984.0
+</td>
+<td style="text-align:right;">
+416.9463
+</td>
+<td style="text-align:right;">
+598
+</td>
+<td style="text-align:right;">
+2013
+</td>
+<td style="text-align:right;">
+1645.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+DANCE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1071.9113
+</td>
+<td style="text-align:right;">
+1003.5
+</td>
+<td style="text-align:right;">
+423.2005
+</td>
+<td style="text-align:right;">
+330
+</td>
+<td style="text-align:right;">
+2255
+</td>
+<td style="text-align:right;">
+1566.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+DANCE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1040.9319
+</td>
+<td style="text-align:right;">
+924.0
+</td>
+<td style="text-align:right;">
+471.6461
+</td>
+<td style="text-align:right;">
+420
+</td>
+<td style="text-align:right;">
+2820
+</td>
+<td style="text-align:right;">
+1596.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+DANCE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+983.1787
+</td>
+<td style="text-align:right;">
+858.0
+</td>
+<td style="text-align:right;">
+465.1651
+</td>
+<td style="text-align:right;">
+322
+</td>
+<td style="text-align:right;">
+4453
+</td>
+<td style="text-align:right;">
+1556.8
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+FIELD HOUSE
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+8000.0000
+</td>
+<td style="text-align:right;">
+8000.0
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+8000
+</td>
+<td style="text-align:right;">
+8000
+</td>
+<td style="text-align:right;">
+8000.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+FIELD HOUSE
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+3150.0000
+</td>
+<td style="text-align:right;">
+3150.0
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+3150
+</td>
+<td style="text-align:right;">
+3150
+</td>
+<td style="text-align:right;">
+3150.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+GYM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+4893.7184
+</td>
+<td style="text-align:right;">
+4416.0
+</td>
+<td style="text-align:right;">
+2419.2812
+</td>
+<td style="text-align:right;">
+675
+</td>
+<td style="text-align:right;">
+17955
+</td>
+<td style="text-align:right;">
+7884.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+GYM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+4790.5858
+</td>
+<td style="text-align:right;">
+4234.0
+</td>
+<td style="text-align:right;">
+2502.6221
+</td>
+<td style="text-align:right;">
+690
+</td>
+<td style="text-align:right;">
+22044
+</td>
+<td style="text-align:right;">
+7770.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+GYM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+4639.6325
+</td>
+<td style="text-align:right;">
+3990.0
+</td>
+<td style="text-align:right;">
+2417.5930
+</td>
+<td style="text-align:right;">
+1260
+</td>
+<td style="text-align:right;">
+12075
+</td>
+<td style="text-align:right;">
+8653.6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+GYM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+4613.6132
+</td>
+<td style="text-align:right;">
+4234.0
+</td>
+<td style="text-align:right;">
+1900.5036
+</td>
+<td style="text-align:right;">
+625
+</td>
+<td style="text-align:right;">
+17200
+</td>
+<td style="text-align:right;">
+7170.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+GYM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+4560.0235
+</td>
+<td style="text-align:right;">
+4125.0
+</td>
+<td style="text-align:right;">
+2242.6181
+</td>
+<td style="text-align:right;">
+598
+</td>
+<td style="text-align:right;">
+11840
+</td>
+<td style="text-align:right;">
+7740.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE CLASSROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+945.5000
+</td>
+<td style="text-align:right;">
+836.0
+</td>
+<td style="text-align:right;">
+407.4568
+</td>
+<td style="text-align:right;">
+288
+</td>
+<td style="text-align:right;">
+1716
+</td>
+<td style="text-align:right;">
+1456.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE CLASSROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+910.6071
+</td>
+<td style="text-align:right;">
+655.0
+</td>
+<td style="text-align:right;">
+890.7646
+</td>
+<td style="text-align:right;">
+96
+</td>
+<td style="text-align:right;">
+7776
+</td>
+<td style="text-align:right;">
+1401.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE CLASSROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+822.8285
+</td>
+<td style="text-align:right;">
+675.0
+</td>
+<td style="text-align:right;">
+558.8419
+</td>
+<td style="text-align:right;">
+104
+</td>
+<td style="text-align:right;">
+3024
+</td>
+<td style="text-align:right;">
+1566.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE CLASSROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+770.9714
+</td>
+<td style="text-align:right;">
+673.5
+</td>
+<td style="text-align:right;">
+407.7913
+</td>
+<td style="text-align:right;">
+72
+</td>
+<td style="text-align:right;">
+3248
+</td>
+<td style="text-align:right;">
+1267.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE CLASSROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+734.2489
+</td>
+<td style="text-align:right;">
+650.0
+</td>
+<td style="text-align:right;">
+489.6045
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+3422
+</td>
+<td style="text-align:right;">
+1254.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1652.6126
+</td>
+<td style="text-align:right;">
+1333.0
+</td>
+<td style="text-align:right;">
+1341.2813
+</td>
+<td style="text-align:right;">
+80
+</td>
+<td style="text-align:right;">
+5586
+</td>
+<td style="text-align:right;">
+3416.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1490.7864
+</td>
+<td style="text-align:right;">
+1001.5
+</td>
+<td style="text-align:right;">
+1669.1275
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:right;">
+8692
+</td>
+<td style="text-align:right;">
+3486.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1392.9518
+</td>
+<td style="text-align:right;">
+1080.0
+</td>
+<td style="text-align:right;">
+1072.7677
+</td>
+<td style="text-align:right;">
+84
+</td>
+<td style="text-align:right;">
+5184
+</td>
+<td style="text-align:right;">
+2866.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1345.6735
+</td>
+<td style="text-align:right;">
+726.0
+</td>
+<td style="text-align:right;">
+1698.5729
+</td>
+<td style="text-align:right;">
+48
+</td>
+<td style="text-align:right;">
+9729
+</td>
+<td style="text-align:right;">
+2989.8
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+MULTI-PURPOSE ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+663.3333
+</td>
+<td style="text-align:right;">
+480.0
+</td>
+<td style="text-align:right;">
+689.8641
+</td>
+<td style="text-align:right;">
+140
+</td>
+<td style="text-align:right;">
+2596
+</td>
+<td style="text-align:right;">
+1455.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+OUTDOOR YARD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+30086.3333
+</td>
+<td style="text-align:right;">
+22630.5
+</td>
+<td style="text-align:right;">
+29750.4093
+</td>
+<td style="text-align:right;">
+1016
+</td>
+<td style="text-align:right;">
+202500
+</td>
+<td style="text-align:right;">
+59945.5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+OUTDOOR YARD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+23620.7291
+</td>
+<td style="text-align:right;">
+18163.0
+</td>
+<td style="text-align:right;">
+19392.0186
+</td>
+<td style="text-align:right;">
+998
+</td>
+<td style="text-align:right;">
+89000
+</td>
+<td style="text-align:right;">
+50054.8
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+OUTDOOR YARD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+21771.3689
+</td>
+<td style="text-align:right;">
+15026.0
+</td>
+<td style="text-align:right;">
+19589.7770
+</td>
+<td style="text-align:right;">
+1200
+</td>
+<td style="text-align:right;">
+98176
+</td>
+<td style="text-align:right;">
+48831.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+OUTDOOR YARD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+20468.7852
+</td>
+<td style="text-align:right;">
+15589.0
+</td>
+<td style="text-align:right;">
+15968.8558
+</td>
+<td style="text-align:right;">
+270
+</td>
+<td style="text-align:right;">
+68580
+</td>
+<td style="text-align:right;">
+43713.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+OUTDOOR YARD
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+13112.6579
+</td>
+<td style="text-align:right;">
+8545.5
+</td>
+<td style="text-align:right;">
+11999.8034
+</td>
+<td style="text-align:right;">
+620
+</td>
+<td style="text-align:right;">
+67000
+</td>
+<td style="text-align:right;">
+31052.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+PLAYROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+3192.6364
+</td>
+<td style="text-align:right;">
+4158.0
+</td>
+<td style="text-align:right;">
+1825.8712
+</td>
+<td style="text-align:right;">
+580
+</td>
+<td style="text-align:right;">
+5365
+</td>
+<td style="text-align:right;">
+5056.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+PLAYROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+3099.7500
+</td>
+<td style="text-align:right;">
+2134.5
+</td>
+<td style="text-align:right;">
+2610.2682
+</td>
+<td style="text-align:right;">
+1200
+</td>
+<td style="text-align:right;">
+6930
+</td>
+<td style="text-align:right;">
+5607.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+PLAYROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+2872.7500
+</td>
+<td style="text-align:right;">
+2540.0
+</td>
+<td style="text-align:right;">
+1465.7070
+</td>
+<td style="text-align:right;">
+1350
+</td>
+<td style="text-align:right;">
+5220
+</td>
+<td style="text-align:right;">
+4895.2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+PLAYROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+2525.6667
+</td>
+<td style="text-align:right;">
+3132.0
+</td>
+<td style="text-align:right;">
+1752.0395
+</td>
+<td style="text-align:right;">
+551
+</td>
+<td style="text-align:right;">
+3894
+</td>
+<td style="text-align:right;">
+3741.6
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+PLAYROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+884.0000
+</td>
+<td style="text-align:right;">
+884.0
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+884
+</td>
+<td style="text-align:right;">
+884
+</td>
+<td style="text-align:right;">
+884.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+SWIMMING POOL
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+5921.7500
+</td>
+<td style="text-align:right;">
+6588.0
+</td>
+<td style="text-align:right;">
+1237.7085
+</td>
+<td style="text-align:right;">
+1728
+</td>
+<td style="text-align:right;">
+7344
+</td>
+<td style="text-align:right;">
+6696.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+SWIMMING POOL
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+5487.0000
+</td>
+<td style="text-align:right;">
+5487.0
+</td>
+<td style="text-align:right;">
+0.0000
+</td>
+<td style="text-align:right;">
+5487
+</td>
+<td style="text-align:right;">
+5487
+</td>
+<td style="text-align:right;">
+5487.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+SWIMMING POOL
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+5094.2000
+</td>
+<td style="text-align:right;">
+5880.0
+</td>
+<td style="text-align:right;">
+2003.1041
+</td>
+<td style="text-align:right;">
+1200
+</td>
+<td style="text-align:right;">
+6840
+</td>
+<td style="text-align:right;">
+6800.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+SWIMMING POOL
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+4823.9756
+</td>
+<td style="text-align:right;">
+4606.0
+</td>
+<td style="text-align:right;">
+1707.9587
+</td>
+<td style="text-align:right;">
+720
+</td>
+<td style="text-align:right;">
+9310
+</td>
+<td style="text-align:right;">
+6848.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+SWIMMING POOL
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+4785.2500
+</td>
+<td style="text-align:right;">
+5135.0
+</td>
+<td style="text-align:right;">
+1674.0140
+</td>
+<td style="text-align:right;">
+1716
+</td>
+<td style="text-align:right;">
+6900
+</td>
+<td style="text-align:right;">
+6705.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:left;">
+WEIGHT ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1624.5683
+</td>
+<td style="text-align:right;">
+1272.0
+</td>
+<td style="text-align:right;">
+1112.9754
+</td>
+<td style="text-align:right;">
+351
+</td>
+<td style="text-align:right;">
+4745
+</td>
+<td style="text-align:right;">
+3111.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:left;">
+WEIGHT ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1393.9569
+</td>
+<td style="text-align:right;">
+1190.0
+</td>
+<td style="text-align:right;">
+822.7308
+</td>
+<td style="text-align:right;">
+99
+</td>
+<td style="text-align:right;">
+3392
+</td>
+<td style="text-align:right;">
+2414.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:left;">
+WEIGHT ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1293.7273
+</td>
+<td style="text-align:right;">
+1163.5
+</td>
+<td style="text-align:right;">
+742.8400
+</td>
+<td style="text-align:right;">
+220
+</td>
+<td style="text-align:right;">
+2325
+</td>
+<td style="text-align:right;">
+2312.9
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:left;">
+WEIGHT ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1236.9892
+</td>
+<td style="text-align:right;">
+1008.0
+</td>
+<td style="text-align:right;">
+869.3982
+</td>
+<td style="text-align:right;">
+170
+</td>
+<td style="text-align:right;">
+5456
+</td>
+<td style="text-align:right;">
+1988.0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:left;">
+WEIGHT ROOM
+</td>
+<td style="text-align:left;">
+SquareFootageAllSpaces
+</td>
+<td style="text-align:right;">
+1207.0583
+</td>
+<td style="text-align:right;">
+1000.0
+</td>
+<td style="text-align:right;">
+867.7667
+</td>
+<td style="text-align:right;">
+240
+</td>
+<td style="text-align:right;">
+3975
+</td>
+<td style="text-align:right;">
+1980.0
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># what is the mean square footage of outdoor spaces by
+# borough as well as all spaces
+joined_set %&gt;% group_by(Borough, gym_room_function) %&gt;% summarize(Mean_Square_Footage_Outdoor_Space = mean(gym_square_footage), 
+    Mean_Underrepresented_Groups = mean(UnderrepresentedProportion), 
+    Mean_Low_Income_Student_Population = mean(Prop_LowIncome)) %&gt;% 
+    filter(gym_room_function == &quot;OUTDOOR YARD&quot;) %&gt;% arrange(desc(Mean_Square_Footage_Outdoor_Space)) %&gt;% 
+    select(-gym_room_function) %&gt;% kbl() %&gt;% kable_styling()</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Borough
+</th>
+<th style="text-align:right;">
+Mean_Square_Footage_Outdoor_Space
+</th>
+<th style="text-align:right;">
+Mean_Underrepresented_Groups
+</th>
+<th style="text-align:right;">
+Mean_Low_Income_Student_Population
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Staten Island
+</td>
+<td style="text-align:right;">
+30086.33
+</td>
+<td style="text-align:right;">
+0.4891556
+</td>
+<td style="text-align:right;">
+0.5947690
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Bronx
+</td>
+<td style="text-align:right;">
+23620.73
+</td>
+<td style="text-align:right;">
+0.9774427
+</td>
+<td style="text-align:right;">
+0.8399943
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Queens
+</td>
+<td style="text-align:right;">
+21771.37
+</td>
+<td style="text-align:right;">
+0.6620122
+</td>
+<td style="text-align:right;">
+0.6636600
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Brooklyn
+</td>
+<td style="text-align:right;">
+20468.79
+</td>
+<td style="text-align:right;">
+0.7532011
+</td>
+<td style="text-align:right;">
+0.7397027
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Manhattan
+</td>
+<td style="text-align:right;">
+13112.66
+</td>
+<td style="text-align:right;">
+0.7291298
+</td>
+<td style="text-align:right;">
+0.6504749
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># correlation matrix
+correlation_mat &lt;- joined_set %&gt;% select_if(is.numeric) %&gt;% cor(use = &quot;pair&quot;)
+correlation_mat %&gt;% kbl() %&gt;% kable_styling()</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+tot_enrollment
+</th>
+<th style="text-align:right;">
+num_female
+</th>
+<th style="text-align:right;">
+num_male
+</th>
+<th style="text-align:right;">
+Number_Asian
+</th>
+<th style="text-align:right;">
+Number_Black
+</th>
+<th style="text-align:right;">
+Number_Hispanic
+</th>
+<th style="text-align:right;">
+Number_Categories_Unrepresented
+</th>
+<th style="text-align:right;">
+Number_White
+</th>
+<th style="text-align:right;">
+Num_Students_With_Disabilities
+</th>
+<th style="text-align:right;">
+Num_English_Lang_Learners
+</th>
+<th style="text-align:right;">
+Num_LowIncome
+</th>
+<th style="text-align:right;">
+gym_square_footage
+</th>
+<th style="text-align:right;">
+number_gyms
+</th>
+<th style="text-align:right;">
+prop_female
+</th>
+<th style="text-align:right;">
+econ_as_num
+</th>
+<th style="text-align:right;">
+UnderrepresentedProportion
+</th>
+<th style="text-align:right;">
+Prop_LowIncome
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+tot_enrollment
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.9679623
+</td>
+<td style="text-align:right;">
+0.9716100
+</td>
+<td style="text-align:right;">
+0.7935488
+</td>
+<td style="text-align:right;">
+0.3461039
+</td>
+<td style="text-align:right;">
+0.6269421
+</td>
+<td style="text-align:right;">
+0.6114693
+</td>
+<td style="text-align:right;">
+0.6873906
+</td>
+<td style="text-align:right;">
+0.3515581
+</td>
+<td style="text-align:right;">
+0.4683938
+</td>
+<td style="text-align:right;">
+0.9339193
+</td>
+<td style="text-align:right;">
+0.0728411
+</td>
+<td style="text-align:right;">
+-0.0508980
+</td>
+<td style="text-align:right;">
+0.0883425
+</td>
+<td style="text-align:right;">
+-0.2592942
+</td>
+<td style="text-align:right;">
+-0.3285345
+</td>
+<td style="text-align:right;">
+-0.1589671
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+num_female
+</td>
+<td style="text-align:right;">
+0.9679623
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.8810755
+</td>
+<td style="text-align:right;">
+0.7426201
+</td>
+<td style="text-align:right;">
+0.3423818
+</td>
+<td style="text-align:right;">
+0.6195463
+</td>
+<td style="text-align:right;">
+0.6143133
+</td>
+<td style="text-align:right;">
+0.6756658
+</td>
+<td style="text-align:right;">
+0.2254935
+</td>
+<td style="text-align:right;">
+0.4384261
+</td>
+<td style="text-align:right;">
+0.9050533
+</td>
+<td style="text-align:right;">
+0.0643665
+</td>
+<td style="text-align:right;">
+-0.1715570
+</td>
+<td style="text-align:right;">
+0.2889948
+</td>
+<td style="text-align:right;">
+-0.2766753
+</td>
+<td style="text-align:right;">
+-0.3213278
+</td>
+<td style="text-align:right;">
+-0.1420677
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+num_male
+</td>
+<td style="text-align:right;">
+0.9716100
+</td>
+<td style="text-align:right;">
+0.8810755
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.7950507
+</td>
+<td style="text-align:right;">
+0.3293256
+</td>
+<td style="text-align:right;">
+0.5971991
+</td>
+<td style="text-align:right;">
+0.5729651
+</td>
+<td style="text-align:right;">
+0.6581691
+</td>
+<td style="text-align:right;">
+0.4497460
+</td>
+<td style="text-align:right;">
+0.4692076
+</td>
+<td style="text-align:right;">
+0.9064144
+</td>
+<td style="text-align:right;">
+0.0765563
+</td>
+<td style="text-align:right;">
+0.0657589
+</td>
+<td style="text-align:right;">
+-0.1058825
+</td>
+<td style="text-align:right;">
+-0.2277266
+</td>
+<td style="text-align:right;">
+-0.3160831
+</td>
+<td style="text-align:right;">
+-0.1655729
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Number_Asian
+</td>
+<td style="text-align:right;">
+0.7935488
+</td>
+<td style="text-align:right;">
+0.7426201
+</td>
+<td style="text-align:right;">
+0.7950507
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.0777634
+</td>
+<td style="text-align:right;">
+0.2588093
+</td>
+<td style="text-align:right;">
+0.5766956
+</td>
+<td style="text-align:right;">
+0.4793832
+</td>
+<td style="text-align:right;">
+0.1088335
+</td>
+<td style="text-align:right;">
+0.3489795
+</td>
+<td style="text-align:right;">
+0.7067110
+</td>
+<td style="text-align:right;">
+0.0390989
+</td>
+<td style="text-align:right;">
+-0.0692901
+</td>
+<td style="text-align:right;">
+0.0573898
+</td>
+<td style="text-align:right;">
+-0.2783854
+</td>
+<td style="text-align:right;">
+-0.4388625
+</td>
+<td style="text-align:right;">
+-0.1743817
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Number_Black
+</td>
+<td style="text-align:right;">
+0.3461039
+</td>
+<td style="text-align:right;">
+0.3423818
+</td>
+<td style="text-align:right;">
+0.3293256
+</td>
+<td style="text-align:right;">
+0.0777634
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.0578286
+</td>
+<td style="text-align:right;">
+0.2056154
+</td>
+<td style="text-align:right;">
+0.0026573
+</td>
+<td style="text-align:right;">
+0.2479238
+</td>
+<td style="text-align:right;">
+-0.0356336
+</td>
+<td style="text-align:right;">
+0.4164627
+</td>
+<td style="text-align:right;">
+0.0506229
+</td>
+<td style="text-align:right;">
+0.0900465
+</td>
+<td style="text-align:right;">
+-0.0081688
+</td>
+<td style="text-align:right;">
+0.0447146
+</td>
+<td style="text-align:right;">
+0.2287461
+</td>
+<td style="text-align:right;">
+0.1513604
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Number_Hispanic
+</td>
+<td style="text-align:right;">
+0.6269421
+</td>
+<td style="text-align:right;">
+0.6195463
+</td>
+<td style="text-align:right;">
+0.5971991
+</td>
+<td style="text-align:right;">
+0.2588093
+</td>
+<td style="text-align:right;">
+0.0578286
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.1689021
+</td>
+<td style="text-align:right;">
+0.1937758
+</td>
+<td style="text-align:right;">
+0.3286449
+</td>
+<td style="text-align:right;">
+0.6635236
+</td>
+<td style="text-align:right;">
+0.7176267
+</td>
+<td style="text-align:right;">
+0.0309298
+</td>
+<td style="text-align:right;">
+-0.0648582
+</td>
+<td style="text-align:right;">
+0.0794146
+</td>
+<td style="text-align:right;">
+0.1593177
+</td>
+<td style="text-align:right;">
+0.0569418
+</td>
+<td style="text-align:right;">
+0.1484902
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Number_Categories_Unrepresented
+</td>
+<td style="text-align:right;">
+0.6114693
+</td>
+<td style="text-align:right;">
+0.6143133
+</td>
+<td style="text-align:right;">
+0.5729651
+</td>
+<td style="text-align:right;">
+0.5766956
+</td>
+<td style="text-align:right;">
+0.2056154
+</td>
+<td style="text-align:right;">
+0.1689021
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.4802495
+</td>
+<td style="text-align:right;">
+0.0964725
+</td>
+<td style="text-align:right;">
+0.0428152
+</td>
+<td style="text-align:right;">
+0.4635835
+</td>
+<td style="text-align:right;">
+0.0255333
+</td>
+<td style="text-align:right;">
+-0.0699083
+</td>
+<td style="text-align:right;">
+0.1116694
+</td>
+<td style="text-align:right;">
+-0.4327510
+</td>
+<td style="text-align:right;">
+-0.3361319
+</td>
+<td style="text-align:right;">
+-0.3310179
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Number_White
+</td>
+<td style="text-align:right;">
+0.6873906
+</td>
+<td style="text-align:right;">
+0.6756658
+</td>
+<td style="text-align:right;">
+0.6581691
+</td>
+<td style="text-align:right;">
+0.4793832
+</td>
+<td style="text-align:right;">
+0.0026573
+</td>
+<td style="text-align:right;">
+0.1937758
+</td>
+<td style="text-align:right;">
+0.4802495
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.2550398
+</td>
+<td style="text-align:right;">
+0.1087301
+</td>
+<td style="text-align:right;">
+0.4771235
+</td>
+<td style="text-align:right;">
+0.0737249
+</td>
+<td style="text-align:right;">
+-0.0379212
+</td>
+<td style="text-align:right;">
+0.0728006
+</td>
+<td style="text-align:right;">
+-0.5222576
+</td>
+<td style="text-align:right;">
+-0.5409338
+</td>
+<td style="text-align:right;">
+-0.4602399
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Num_Students_With_Disabilities
+</td>
+<td style="text-align:right;">
+0.3515581
+</td>
+<td style="text-align:right;">
+0.2254935
+</td>
+<td style="text-align:right;">
+0.4497460
+</td>
+<td style="text-align:right;">
+0.1088335
+</td>
+<td style="text-align:right;">
+0.2479238
+</td>
+<td style="text-align:right;">
+0.3286449
+</td>
+<td style="text-align:right;">
+0.0964725
+</td>
+<td style="text-align:right;">
+0.2550398
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.2733138
+</td>
+<td style="text-align:right;">
+0.3318878
+</td>
+<td style="text-align:right;">
+0.0600547
+</td>
+<td style="text-align:right;">
+0.7047512
+</td>
+<td style="text-align:right;">
+-0.5529153
+</td>
+<td style="text-align:right;">
+0.0211409
+</td>
+<td style="text-align:right;">
+-0.0781669
+</td>
+<td style="text-align:right;">
+-0.1654403
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Num_English_Lang_Learners
+</td>
+<td style="text-align:right;">
+0.4683938
+</td>
+<td style="text-align:right;">
+0.4384261
+</td>
+<td style="text-align:right;">
+0.4692076
+</td>
+<td style="text-align:right;">
+0.3489795
+</td>
+<td style="text-align:right;">
+-0.0356336
+</td>
+<td style="text-align:right;">
+0.6635236
+</td>
+<td style="text-align:right;">
+0.0428152
+</td>
+<td style="text-align:right;">
+0.1087301
+</td>
+<td style="text-align:right;">
+0.2733138
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.5537046
+</td>
+<td style="text-align:right;">
+0.0327352
+</td>
+<td style="text-align:right;">
+-0.0017927
+</td>
+<td style="text-align:right;">
+-0.0317585
+</td>
+<td style="text-align:right;">
+0.1849467
+</td>
+<td style="text-align:right;">
+-0.1160956
+</td>
+<td style="text-align:right;">
+0.0936991
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Num_LowIncome
+</td>
+<td style="text-align:right;">
+0.9339193
+</td>
+<td style="text-align:right;">
+0.9050533
+</td>
+<td style="text-align:right;">
+0.9064144
+</td>
+<td style="text-align:right;">
+0.7067110
+</td>
+<td style="text-align:right;">
+0.4164627
+</td>
+<td style="text-align:right;">
+0.7176267
+</td>
+<td style="text-align:right;">
+0.4635835
+</td>
+<td style="text-align:right;">
+0.4771235
+</td>
+<td style="text-align:right;">
+0.3318878
+</td>
+<td style="text-align:right;">
+0.5537046
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.0709557
+</td>
+<td style="text-align:right;">
+-0.0675658
+</td>
+<td style="text-align:right;">
+0.0962146
+</td>
+<td style="text-align:right;">
+-0.0257510
+</td>
+<td style="text-align:right;">
+-0.1477087
+</td>
+<td style="text-align:right;">
+0.1358427
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+gym_square_footage
+</td>
+<td style="text-align:right;">
+0.0728411
+</td>
+<td style="text-align:right;">
+0.0643665
+</td>
+<td style="text-align:right;">
+0.0765563
+</td>
+<td style="text-align:right;">
+0.0390989
+</td>
+<td style="text-align:right;">
+0.0506229
+</td>
+<td style="text-align:right;">
+0.0309298
+</td>
+<td style="text-align:right;">
+0.0255333
+</td>
+<td style="text-align:right;">
+0.0737249
+</td>
+<td style="text-align:right;">
+0.0600547
+</td>
+<td style="text-align:right;">
+0.0327352
+</td>
+<td style="text-align:right;">
+0.0709557
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.0277006
+</td>
+<td style="text-align:right;">
+-0.0244410
+</td>
+<td style="text-align:right;">
+-0.0164783
+</td>
+<td style="text-align:right;">
+-0.0237619
+</td>
+<td style="text-align:right;">
+0.0072457
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+number_gyms
+</td>
+<td style="text-align:right;">
+-0.0508980
+</td>
+<td style="text-align:right;">
+-0.1715570
+</td>
+<td style="text-align:right;">
+0.0657589
+</td>
+<td style="text-align:right;">
+-0.0692901
+</td>
+<td style="text-align:right;">
+0.0900465
+</td>
+<td style="text-align:right;">
+-0.0648582
+</td>
+<td style="text-align:right;">
+-0.0699083
+</td>
+<td style="text-align:right;">
+-0.0379212
+</td>
+<td style="text-align:right;">
+0.7047512
+</td>
+<td style="text-align:right;">
+-0.0017927
+</td>
+<td style="text-align:right;">
+-0.0675658
+</td>
+<td style="text-align:right;">
+0.0277006
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+-0.5810514
+</td>
+<td style="text-align:right;">
+0.1202238
+</td>
+<td style="text-align:right;">
+0.0432159
+</td>
+<td style="text-align:right;">
+-0.1023925
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+prop_female
+</td>
+<td style="text-align:right;">
+0.0883425
+</td>
+<td style="text-align:right;">
+0.2889948
+</td>
+<td style="text-align:right;">
+-0.1058825
+</td>
+<td style="text-align:right;">
+0.0573898
+</td>
+<td style="text-align:right;">
+-0.0081688
+</td>
+<td style="text-align:right;">
+0.0794146
+</td>
+<td style="text-align:right;">
+0.1116694
+</td>
+<td style="text-align:right;">
+0.0728006
+</td>
+<td style="text-align:right;">
+-0.5529153
+</td>
+<td style="text-align:right;">
+-0.0317585
+</td>
+<td style="text-align:right;">
+0.0962146
+</td>
+<td style="text-align:right;">
+-0.0244410
+</td>
+<td style="text-align:right;">
+-0.5810514
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+-0.1205583
+</td>
+<td style="text-align:right;">
+-0.0335689
+</td>
+<td style="text-align:right;">
+0.0797416
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+econ_as_num
+</td>
+<td style="text-align:right;">
+-0.2592942
+</td>
+<td style="text-align:right;">
+-0.2766753
+</td>
+<td style="text-align:right;">
+-0.2277266
+</td>
+<td style="text-align:right;">
+-0.2783854
+</td>
+<td style="text-align:right;">
+0.0447146
+</td>
+<td style="text-align:right;">
+0.1593177
+</td>
+<td style="text-align:right;">
+-0.4327510
+</td>
+<td style="text-align:right;">
+-0.5222576
+</td>
+<td style="text-align:right;">
+0.0211409
+</td>
+<td style="text-align:right;">
+0.1849467
+</td>
+<td style="text-align:right;">
+-0.0257510
+</td>
+<td style="text-align:right;">
+-0.0164783
+</td>
+<td style="text-align:right;">
+0.1202238
+</td>
+<td style="text-align:right;">
+-0.1205583
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.6394468
+</td>
+<td style="text-align:right;">
+0.7807431
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+UnderrepresentedProportion
+</td>
+<td style="text-align:right;">
+-0.3285345
+</td>
+<td style="text-align:right;">
+-0.3213278
+</td>
+<td style="text-align:right;">
+-0.3160831
+</td>
+<td style="text-align:right;">
+-0.4388625
+</td>
+<td style="text-align:right;">
+0.2287461
+</td>
+<td style="text-align:right;">
+0.0569418
+</td>
+<td style="text-align:right;">
+-0.3361319
+</td>
+<td style="text-align:right;">
+-0.5409338
+</td>
+<td style="text-align:right;">
+-0.0781669
+</td>
+<td style="text-align:right;">
+-0.1160956
+</td>
+<td style="text-align:right;">
+-0.1477087
+</td>
+<td style="text-align:right;">
+-0.0237619
+</td>
+<td style="text-align:right;">
+0.0432159
+</td>
+<td style="text-align:right;">
+-0.0335689
+</td>
+<td style="text-align:right;">
+0.6394468
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+<td style="text-align:right;">
+0.6017201
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Prop_LowIncome
+</td>
+<td style="text-align:right;">
+-0.1589671
+</td>
+<td style="text-align:right;">
+-0.1420677
+</td>
+<td style="text-align:right;">
+-0.1655729
+</td>
+<td style="text-align:right;">
+-0.1743817
+</td>
+<td style="text-align:right;">
+0.1513604
+</td>
+<td style="text-align:right;">
+0.1484902
+</td>
+<td style="text-align:right;">
+-0.3310179
+</td>
+<td style="text-align:right;">
+-0.4602399
+</td>
+<td style="text-align:right;">
+-0.1654403
+</td>
+<td style="text-align:right;">
+0.0936991
+</td>
+<td style="text-align:right;">
+0.1358427
+</td>
+<td style="text-align:right;">
+0.0072457
+</td>
+<td style="text-align:right;">
+-0.1023925
+</td>
+<td style="text-align:right;">
+0.0797416
+</td>
+<td style="text-align:right;">
+0.7807431
+</td>
+<td style="text-align:right;">
+0.6017201
+</td>
+<td style="text-align:right;">
+1.0000000
+</td>
+</tr>
+</tbody>
+</table>
+<p>First, the mean, standard deviation, min, max, and 90th percentile were computed for all instances of the variables Enrollment, GymSqFootage, NumberOfGyms, ProportionOfStudentsFemale, SchoolEconomicNeedIndex, ProportionofStudentsUnderrepresentedPopulations, and ProportionofStudentsinPoverty. These summary statistics were computer again by borough. Interestingly, Staten Island had the highest enrollments, gym sizes, and number of gyms; however, Staten Island also had the lowest proportion of female-indentifying students among their student body, the lowest proportion of students from underrepresented populations, the lowest average Economic Need Index across schools, and the lowest proportion of students from a low-income background. Although Manhattan had the lowest square footage, gym-wise, it had the highest amount of gyms. The Bronx, on average, had the most amount of students from underrepresented populations as well as the highest average School Economic Need Index. The min number of physical education spaces across all boroughs was 1, and Staten Island had the school with the most physical education spaces at 48. Surprisingly, the max school physical education spaces didn’t vary too much, with the lowest being 32 and the highest being 48, leading me to believe that each borough has at least one school system that shres its facilities among its’ schools. All boroughs have all-male schools; however, Staten Island is the only borough without an all-girls school listed in this dataset. Interestingly, when subsetting by type of facility and borough, there is less of an apparent difference between the facilities available across the 5 boroughs, and the low variance across medians is visualized in the second bar graph below.</p>
+</div>
+<div id="visualizing" class="section level4">
+<h4>4. Visualizing</h4>
+<pre class="r"><code>options(scipen = 999)
+without_athletic_field &lt;- joined_set %&gt;% filter(gym_room_function != 
+    &quot;ATHLETIC FIELD&quot;)
+ggplot(without_athletic_field, aes(econ_as_num, gym_square_footage, 
+    color = Borough)) + geom_point(stat = &quot;summary&quot;, fun = mean, 
+    size = 3) + scale_color_brewer(palette = &quot;Accent&quot;) + xlab(&quot;Economic Need Index of School&quot;) + 
+    ylab(&quot;Recreational Area Space (sq. ft.)&quot;) + ggtitle(&quot;Scatterplot of Mean Recreational Area Space (sq. ft.) vs. Economic Need Index of Students in New York City Boroughs &quot;) + 
+    scale_y_continuous(breaks = seq(0, 60000, 2000)) + theme_minimal()</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-4-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p>In this graph, I attempted to analyze the relationship between Recreational Area Space and Economic Need Index by Borough. Firstly, it is apparent that the Bronx contains many schools with high Economic Need Indices, which signifies that there are many schools in that area that low-income children attend. Although Manhattan and Brooklyn have a wider spread across Economic Need Index, it is apparent from the graph that these two boroughs also contain a large amount of schools with a high Economic Need Index. The Economic Need Index of Schools is much more evenly distributed across Staten Island and Queens, although it does seem that the most of the schools in New York City with a low Economic Need Index are located in Brooklyn or Manhattan. As far as recreational Area Space and Economic Need Index, it appears that there is very little, if any, positive correlation between these two variables. This could also be confounded by the fact that certain schools share facilities and therefore have access to more recreational area space, in terms of square feet. In fact, it does appear that schools with a mid-to-high Economic Need Index in the Bronx have a large amount of Recreational Area Space, which may be affected by the fact that they share facilities.</p>
+<pre class="r"><code>ggplot(without_athletic_field, aes(Borough)) + geom_histogram(stat = &quot;count&quot;, 
+    aes(fill = shared), position = &quot;dodge&quot;) + scale_fill_brewer(palette = &quot;Accent&quot;) + 
+    xlab(&quot;Borough&quot;) + ylab(&quot;Number of Gym Spaces&quot;) + ggtitle(&quot;Number of Shared and Unshared Gym Spaces by Boroughs &quot;) + 
+    theme_minimal()</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-5-1.png" width="1440" style="display: block; margin: auto;" />
+The previous graph led me to decide to investigate how the number of shared and unshared gym spaces differed by borough. It is apparent from the above graph that most boroughs contain more shared spaces vs. unshared spaces, especially in the Bronx, Brooklyn, and Manhattan. These three boroughs were implicated in the previous graph as having higher Economic Need Indexes among their schools, which leads me to believe that there is a correlation between having a higher amount of shared facilities and higher Economic Need Indexes, though this would have to be graphed in order to visualize whether that correlation exists. If this correlation exists, it could be problematic as children would not have immediate access to facilities, and therefore be forced to travel to use physical education facilities or rely on publical, general-use facilities rather than school-providded facilities.</p>
+<pre class="r"><code>only_athletic_field &lt;- joined_set %&gt;% filter(gym_room_function == 
+    &quot;ATHLETIC FIELD&quot;)
+ggplot(only_athletic_field, aes(econ_as_num, gym_square_footage, 
+    color = Borough)) + geom_point(stat = &quot;summary&quot;, fun = mean, 
+    size = 3) + scale_color_brewer(palette = &quot;Accent&quot;) + xlab(&quot;Economic Need Index of School&quot;) + 
+    ylab(&quot;Athletic Field Space (sq. ft.)&quot;) + ggtitle(&quot;Scatterplot of Mean Athletic Field Space (sq. ft.) vs. Economic Need Index of Students in New York City Boroughs &quot;)</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-6-1.png" width="1440" style="display: block; margin: auto;" />
+Here, the mean Athletic Field Space was visualized against the Economic Need Indices of schools with the 5 New York City Borough. Firstly, it is apparent that not all schools in the dataset have Athletic Field Space. That data could be missing due to it either not being collected, being listed under a different variable, or being nonexistent because the schools in question don’t have those facilities. Queens and Staten Island appear to have schools with the largest amount of Athletic Field Space as well as the Lowest Economic Need Indices, and there does appear to be a slight negative correlation between the latter two variables. Brooklyn consistently has athletic field spaces that are among the lowest.</p>
+<pre class="r"><code>ggplot(joined_set, aes(gym_room_function, log10(gym_square_footage), 
+    fill = Borough)) + geom_histogram(stat = &quot;summary&quot;, fun = mean, 
+    position = &quot;dodge&quot;) + theme_dark() + theme(axis.text.x = element_text(angle = 45, 
+    hjust = 1)) + scale_fill_brewer() + xlab(&quot;Type of Recreational Area Space&quot;) + 
+    ylab(&quot;Logarithmically Scaled Recreational Area Space&quot;) + 
+    ggtitle(&quot;Recreational Area Space by Type of Space Across New York City Boroughs &quot;)</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-7-1.png" width="1440" style="display: block; margin: auto;" />
+Here, the types of recreational area spaces are graphed against a logarithmically scaled representation of recreational area space. Log y-axis data was chosen because the intra-recreational area space comparisons between boroughs were what I was most interested in. The bars in all the categories appear to be of close heights to each other, excepting the ‘Playroom’ category and the ‘multi-purpose room’ category. Staten Island has less multi-purpose rooms, although it has a comparable amount of multi-purpose classrooms to the other Boroughs, and Manhattan has less playrooms than any other boroughs. Although Staten Island does tend to have the most recreational area space, no matter the type of space, it does not seem to have a significantly greater amount of recreational space than the other boroughs. Although the other graphs did demonstrate that Staten Island tends to have the lowest Economic Need Indices and the most amount of recreational space, this graph makes the argument that this difference in space is not by a significant amount.</p>
+<pre class="r"><code># correlation heatmap
+correlation_mat %&gt;% as.data.frame() %&gt;% rownames_to_column(&quot;var1&quot;) %&gt;% 
+    pivot_longer(-1, &quot;var2&quot;, values_to = &quot;corr&quot;) %&gt;% ggplot(aes(var1, 
+    var2, fill = corr)) + scale_fill_gradient2(low = &quot;mintcream&quot;, 
+    mid = &quot;lightblue2&quot;, high = &quot;lightsteelblue4&quot;) + geom_tile() + 
+    geom_text(aes(label = round(corr, 2)), size = 4) + theme(axis.text.x = element_text(angle = 45, 
+    hjust = 1), legend.position = &quot;none&quot;) + ggtitle(&quot;Correlation Plot&quot;)</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-8-1.png" width="1440" style="display: block; margin: auto;" /></p>
+</div>
+<div id="dimensionality-reduction" class="section level4">
+<h4>5. Dimensionality Reduction</h4>
+<pre class="r"><code>joined_set_small &lt;- joined_set %&gt;% select(Num_LowIncome, gym_square_footage, 
+    prop_female, econ_as_num, UnderrepresentedProportion, Prop_LowIncome) %&gt;% 
+    scale()
+eigen_mat &lt;- joined_set_small %&gt;% prcomp()
+joined_set_small %&gt;% princomp() %&gt;% summary(loadings = T)</code></pre>
+<pre><code>## Importance of components:
+##                           Comp.1    Comp.2    Comp.3    Comp.4     Comp.5
+## Standard deviation     1.5338263 1.0797949 1.0137358 0.9410418 0.62020815
+## Proportion of Variance 0.3921605 0.1943543 0.1713015 0.1476146 0.06411896
+## Cumulative Proportion  0.3921605 0.5865148 0.7578163 0.9054309 0.96954984
+##                            Comp.6
+## Standard deviation     0.42740442
+## Proportion of Variance 0.03045016
+## Cumulative Proportion  1.00000000
+## 
+## Loadings:
+##                            Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6
+## Num_LowIncome                      0.744  0.127  0.590  0.261  0.117
+## gym_square_footage                 0.270  0.812 -0.517              
+## prop_female                        0.551 -0.564 -0.594         0.156
+## econ_as_num                -0.599                      -0.389  0.692
+## UnderrepresentedProportion -0.546 -0.139        -0.160  0.810       
+## Prop_LowIncome             -0.585  0.222               -0.353 -0.694</code></pre>
+<pre class="r"><code>summary(eigen_mat, loadings = T)</code></pre>
+<pre><code>## Importance of components:
+##                           PC1    PC2    PC3    PC4     PC5     PC6
+## Standard deviation     1.5339 1.0799 1.0138 0.9411 0.62025 0.42744
+## Proportion of Variance 0.3922 0.1943 0.1713 0.1476 0.06412 0.03045
+## Cumulative Proportion  0.3922 0.5865 0.7578 0.9054 0.96955 1.00000</code></pre>
+<pre class="r"><code>eigval &lt;- eigen_mat$sdev^2
+varprop = round(eigval/sum(eigval), 2)
+varprop</code></pre>
+<pre><code>## [1] 0.39 0.19 0.17 0.15 0.06 0.03</code></pre>
+<pre class="r"><code>ggplot() + geom_bar(aes(y = varprop, x = 1:6), stat = &quot;identity&quot;) + 
+    xlab(&quot;&quot;) + geom_path(aes(y = varprop, x = 1:6)) + geom_text(aes(x = 1:6, 
+    y = varprop, label = round(varprop, 2)), vjust = 1, col = &quot;white&quot;, 
+    size = 5) + scale_y_continuous(breaks = seq(0, 0.6, 0.2), 
+    labels = scales::percent) + scale_x_continuous(breaks = 1:10)</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-9-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>new_results &lt;- joined_set_small %&gt;% as.data.frame %&gt;% mutate(PC1 = eigen_mat$x[, 
+    1], PC2 = eigen_mat$x[, 2], PC3 = eigen_mat$x[, 3], PC4 = eigen_mat$x[, 
+    4])
+fviz_pca_biplot(eigen_mat) + coord_fixed()</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-9-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>new_results %&gt;% ggplot(aes(PC1, PC2, color = econ_as_num)) + 
+    geom_point()</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-9-3.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>new_results %&gt;% ggplot(aes(PC1, PC2, color = prop_female)) + 
+    geom_point()</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-9-4.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>new_results %&gt;% ggplot(aes(PC1, PC2, color = gym_square_footage)) + 
+    geom_point()</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-9-5.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>new_results %&gt;% ggplot(aes(PC2, PC3, color = gym_square_footage)) + 
+    geom_point()</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-9-6.png" width="768" style="display: block; margin: auto;" /></p>
+<p>Here, PCA was performed in order to study the variance behind certain variables in the New York City datasets I chose to analyze. Specifically, the variables chosen to analyze were Num_LowIncome, gym_square_footage, prop_female, econ_as_num, UnderrepresentedProportion, and Prop_LowIncome. First, an eigenmatrix was generated from the original numeric dataframe. Then, PCA scores were found by combining the various eigenvectors found in the original matrix. Lastly, the variances are found by viewing the eigenvalues that were associated with the eigenvectors in the original matrix. Depending on which eigenvalues were the greatest, the various PCs can be graphed along with the original variables in order to observe whether they are able to create distinctions among that variable.</p>
+<p>According to the PCA performed on this dataset, the first four PCs were enough to summarize the data; however, this is a majority of the PCs available in the first place. PC1 itself can only explain 39% of the data, and PC1 + Pc2 can only explain about 60% of the data variance. This becomes apparent when I try to graph any original variable against PC1 and PC2. For example, PC1 explains more of the variance in the econ_as_num variable than PC2 does, as there is a significant and apparent gradient in color down the x axis, which is less apparent moving up or down the y axis. However, PC2 can separate gym_square_footage to some extent, as this variable differs in color down the y axis, but the gradient difference is indistinguishable across the x axis, leading the viewer to believe that PC1 does not significantly explain any variance in gym_square_footage. In an attempt to visualize whether PC2 and PC3 may better explain variance in gym_square_footage, it was discovered that PC3 does separate gym_square_footage down the y axis. Therefore, these two principal components can better explain variance in gym_square_footage.</p>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="/js/docs.min.js"></script>
+<script src="/js/main.js"></script>
+
+<script src="/js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>
