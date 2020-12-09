@@ -13,10 +13,10 @@
       <pubDate>Fri, 04 Dec 2020 00:00:00 +0000</pubDate>
       
       <guid>/post/2020/12/04/actual-first-post/</guid>
-      <description>This is my first post! I hope it works. test post test post test post testpost test post test post test post test post test post test post test post
+      <description>This is my first post!
 Link to project 1
 Link to google
-print(&amp;quot;Here&amp;#39;s an R code chunk.&amp;quot;)## [1] &amp;quot;Here&amp;#39;s an R code chunk.&amp;quot;print(&amp;quot;And here&amp;#39;s a python code chunk.&amp;quot;)## And here&amp;#39;s a python code chunk.Here’s an image!</description>
+library(reticulate)## Warning: package &amp;#39;reticulate&amp;#39; was built under R version 4.0.3print(&amp;quot;Here&amp;#39;s an R code chunk.&amp;quot;)## [1] &amp;quot;Here&amp;#39;s an R code chunk.&amp;quot;li &amp;lt;- c(3, 12, 4, 16, 17)print(li)## [1] 3 12 4 16 17In python, you can create data structures called ‘dictionaries’. Dictionaries allowed you to store a ‘key’ and pair it with one or more ‘values’.</description>
     </item>
     
     <item>

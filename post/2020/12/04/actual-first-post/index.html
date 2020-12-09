@@ -70,17 +70,49 @@
           <div class="panel-body">
             <div class="blogpost">
               
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
 
 
-<p>This is my first post! I hope it works. test post test post test post test
-post test post test post test post test post test post test post test post</p>
+<p>This is my first post!</p>
 <p><a href="/project/project1/">Link to project 1</a></p>
 <p><a href="https://www.google.com">Link to google</a></p>
+<pre class="r"><code>library(reticulate)</code></pre>
+<pre><code>## Warning: package &#39;reticulate&#39; was built under R version 4.0.3</code></pre>
 <pre class="r"><code>print(&quot;Here&#39;s an R code chunk.&quot;)</code></pre>
 <pre><code>## [1] &quot;Here&#39;s an R code chunk.&quot;</code></pre>
+<pre class="r"><code>li &lt;- c(3, 12, 4, 16, 17)
+print(li)</code></pre>
+<pre><code>## [1]  3 12  4 16 17</code></pre>
+<p>In python, you can create data structures called ‘dictionaries’. Dictionaries allowed you to store a ‘key’ and pair it with one or more ‘values’. Although unordered, it is possible to extract a value or values associated with a key. In the following python code chunk, I have provided an example of a dictionary.</p>
 <pre class="python"><code>
-print(&quot;And here&#39;s a python code chunk.&quot;)</code></pre>
-<pre><code>## And here&#39;s a python code chunk.</code></pre>
+#create dictionary
+departments = {&#39;Natural Sciences&#39;: &#39;Biology&#39;, &#39;Natural Sciences&#39;: &#39;Chemistry&#39;, &#39;Business&#39;: &#39;MIS&#39;, &#39;Liberal Arts&#39;: &#39;English&#39;}
+
+print(departments)
+#As is apparent from this example, if a key is paired with multiple values, the last value it is paired #with will override any previous values it was paired with.
+
+# To associate multiple values with a key, you must initialize some sort of object holder such as a list
+# within the dictionary, and then it will be able to associate multiple values with a key.
+#example:</code></pre>
+<pre><code>## {&#39;Natural Sciences&#39;: &#39;Chemistry&#39;, &#39;Business&#39;: &#39;MIS&#39;, &#39;Liberal Arts&#39;: &#39;English&#39;}</code></pre>
+<pre class="python"><code>songs_in_playlist = {&#39;Taylor Swift&#39;: [&#39;mirrorball&#39;, &#39;Christmas Tree Farm&#39;], &#39;Taemin&#39; : &#39;Think of You&#39;, &#39;Maggie Rogers&#39; : [&#39;Color Song&#39;]}
+print(songs_in_playlist) #before song added</code></pre>
+<pre><code>## {&#39;Taylor Swift&#39;: [&#39;mirrorball&#39;, &#39;Christmas Tree Farm&#39;], &#39;Taemin&#39;: &#39;Think of You&#39;, &#39;Maggie Rogers&#39;: [&#39;Color Song&#39;]}</code></pre>
+<pre class="python"><code>songs_in_playlist[&#39;Maggie Rogers&#39;].append(&#39;Alaska&#39;) #add song to any category with object holder
+print(songs_in_playlist) #after song added
+
+#let&#39;s loop through the artists!</code></pre>
+<pre><code>## {&#39;Taylor Swift&#39;: [&#39;mirrorball&#39;, &#39;Christmas Tree Farm&#39;], &#39;Taemin&#39;: &#39;Think of You&#39;, &#39;Maggie Rogers&#39;: [&#39;Color Song&#39;, &#39;Alaska&#39;]}</code></pre>
+<pre class="python"><code>for key in songs_in_playlist:
+  print(key)
+  print(songs_in_playlist[key])
+  </code></pre>
+<pre><code>## Taylor Swift
+## [&#39;mirrorball&#39;, &#39;Christmas Tree Farm&#39;]
+## Taemin
+## Think of You
+## Maggie Rogers
+## [&#39;Color Song&#39;, &#39;Alaska&#39;]</code></pre>
 <p>Here’s an image!
 <img src="/post/2020-12-04-actual-first-post_files/01c1c5978016120df88144866a222681853b7af578.jpg" /></p>
 

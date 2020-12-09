@@ -8,23 +8,45 @@ tags: []
 description: ''
 ---
 
-This is my first post! I hope it works. test post test post test post test
-post test post test post test post test post test post test post test post
+This is my first post!
 
 [Link to project 1](/project/project1/)
 
 [Link to google](https://www.google.com)
 
 ```{R}
+library(reticulate)
 
 print("Here's an R code chunk.")
+li <- c(3, 12, 4, 16, 17)
+print(li)
 
 ```
 
+
+In python, you can create data structures called 'dictionaries'. Dictionaries allowed you to store a 'key' and pair it with one or more 'values'. Although unordered, it is possible to extract a value or values associated with a key. In the following python code chunk, I have provided an example of a dictionary.
+
 ```{python}
 
-print("And here's a python code chunk.")
+#create dictionary
+departments = {'Natural Sciences': 'Biology', 'Natural Sciences': 'Chemistry', 'Business': 'MIS', 'Liberal Arts': 'English'}
 
+print(departments)
+#As is apparent from this example, if a key is paired with multiple values, the last value it is paired #with will override any previous values it was paired with.
+
+# To associate multiple values with a key, you must initialize some sort of object holder such as a list
+# within the dictionary, and then it will be able to associate multiple values with a key.
+#example:
+songs_in_playlist = {'Taylor Swift': ['mirrorball', 'Christmas Tree Farm'], 'Taemin' : 'Think of You', 'Maggie Rogers' : ['Color Song']}
+print(songs_in_playlist) #before song added
+songs_in_playlist['Maggie Rogers'].append('Alaska') #add song to any category with object holder
+print(songs_in_playlist) #after song added
+
+#let's loop through the artists!
+for key in songs_in_playlist:
+  print(key)
+  print(songs_in_playlist[key])
+  
 ```
 
 Here's an image!
