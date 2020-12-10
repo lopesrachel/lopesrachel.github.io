@@ -14,8 +14,7 @@
       
       <guid>/post/2020/12/04/actual-first-post/</guid>
       <description>This is my first post!
-Link to project 1
-library(reticulate)## Warning: package &amp;#39;reticulate&amp;#39; was built under R version 4.0.3print(&amp;quot;Here&amp;#39;s an R chunk!&amp;quot;)## [1] &amp;quot;Here&amp;#39;s an R chunk!&amp;quot;In python, you can create data structures called ‘dictionaries’. Dictionaries allowed you to store a ‘key’ and pair it with one or more ‘values’. Although unordered, it is possible to extract a value or values associated with a key.</description>
+library(reticulate)## Warning: package &amp;#39;reticulate&amp;#39; was built under R version 4.0.3print(&amp;quot;Here&amp;#39;s an R chunk!&amp;quot;)## [1] &amp;quot;Here&amp;#39;s an R chunk!&amp;quot;In python, you can create data structures called ‘dictionaries’. Dictionaries allowed you to store a ‘key’ and pair it with one or more ‘values’. Although unordered, it is possible to extract a value or values associated with a key. In the following python code chunk, I have provided an example of a dictionary.</description>
     </item>
     
   </channel>

@@ -74,7 +74,6 @@
 
 
 <p>This is my first post!</p>
-<p><a href="/project/project1/">Link to project 1</a></p>
 <pre class="r"><code>library(reticulate)</code></pre>
 <pre><code>## Warning: package &#39;reticulate&#39; was built under R version 4.0.3</code></pre>
 <pre class="r"><code>print(&quot;Here&#39;s an R chunk!&quot;)</code></pre>
@@ -85,14 +84,13 @@
 #create dictionary
 departments = {&#39;Natural Sciences&#39;: &#39;Biology&#39;, &#39;Natural Sciences&#39;: &#39;Chemistry&#39;, &#39;Business&#39;: &#39;MIS&#39;, &#39;Liberal Arts&#39;: &#39;English&#39;}
 
-print(departments)
-#As is apparent from this example, if a key is paired with multiple values, the last value it is paired #with will override any previous values it was paired with.
+#As is apparent from the following example, if a key is paired with multiple values, the last value it is paired with will override any previous values it was paired with.
 
 # To associate multiple values with a key, you must initialize some sort of object holder such as a list
 # within the dictionary, and then it will be able to associate multiple values with a key.
-#example:</code></pre>
+print(departments)</code></pre>
 <pre><code>## {&#39;Natural Sciences&#39;: &#39;Chemistry&#39;, &#39;Business&#39;: &#39;MIS&#39;, &#39;Liberal Arts&#39;: &#39;English&#39;}</code></pre>
-<pre class="python"><code>songs_in_playlist = {&#39;Taylor Swift&#39;: [&#39;mirrorball&#39;, &#39;Christmas Tree Farm&#39;], &#39;Taemin&#39; : &#39;Think of You&#39;, &#39;Maggie Rogers&#39; : [&#39;Color Song&#39;]}
+<pre class="python"><code>songs_in_playlist = {&#39;Taylor Swift&#39;: [&#39;mirrorball&#39;, &#39;Christmas Tree Farm&#39;], &#39;Taemin&#39; : &#39;Think of You&#39;, &#39;Maggie Rogers&#39; : [&#39;Color Song&#39;]} #example
 print(songs_in_playlist) #before song added</code></pre>
 <pre><code>## {&#39;Taylor Swift&#39;: [&#39;mirrorball&#39;, &#39;Christmas Tree Farm&#39;], &#39;Taemin&#39;: &#39;Think of You&#39;, &#39;Maggie Rogers&#39;: [&#39;Color Song&#39;]}</code></pre>
 <pre class="python"><code>songs_in_playlist[&#39;Maggie Rogers&#39;].append(&#39;Alaska&#39;) #add song to any category with object holder

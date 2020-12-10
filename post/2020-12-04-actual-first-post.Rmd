@@ -10,8 +10,6 @@ description: ''
 
 This is my first post!
 
-[Link to project 1](/project/project1/)
-
 ```{R}
 library(reticulate)
 print("Here's an R chunk!")
@@ -26,13 +24,13 @@ import pandas as pd
 #create dictionary
 departments = {'Natural Sciences': 'Biology', 'Natural Sciences': 'Chemistry', 'Business': 'MIS', 'Liberal Arts': 'English'}
 
-print(departments)
-#As is apparent from this example, if a key is paired with multiple values, the last value it is paired #with will override any previous values it was paired with.
+#As is apparent from the following example, if a key is paired with multiple values, the last value it is paired with will override any previous values it was paired with.
 
 # To associate multiple values with a key, you must initialize some sort of object holder such as a list
 # within the dictionary, and then it will be able to associate multiple values with a key.
-#example:
-songs_in_playlist = {'Taylor Swift': ['mirrorball', 'Christmas Tree Farm'], 'Taemin' : 'Think of You', 'Maggie Rogers' : ['Color Song']}
+print(departments)
+
+songs_in_playlist = {'Taylor Swift': ['mirrorball', 'Christmas Tree Farm'], 'Taemin' : 'Think of You', 'Maggie Rogers' : ['Color Song']} #example
 print(songs_in_playlist) #before song added
 songs_in_playlist['Maggie Rogers'].append('Alaska') #add song to any category with object holder
 print(songs_in_playlist) #after song added
