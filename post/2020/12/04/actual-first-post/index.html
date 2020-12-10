@@ -75,16 +75,13 @@
 
 <p>This is my first post!</p>
 <p><a href="/project/project1/">Link to project 1</a></p>
-<p><a href="https://www.google.com">Link to google</a></p>
 <pre class="r"><code>library(reticulate)</code></pre>
 <pre><code>## Warning: package &#39;reticulate&#39; was built under R version 4.0.3</code></pre>
-<pre class="r"><code>print(&quot;Here&#39;s an R code chunk.&quot;)</code></pre>
-<pre><code>## [1] &quot;Here&#39;s an R code chunk.&quot;</code></pre>
-<pre class="r"><code>li &lt;- c(3, 12, 4, 16, 17)
-print(li)</code></pre>
-<pre><code>## [1]  3 12  4 16 17</code></pre>
+<pre class="r"><code>print(&quot;Here&#39;s an R chunk!&quot;)</code></pre>
+<pre><code>## [1] &quot;Here&#39;s an R chunk!&quot;</code></pre>
 <p>In python, you can create data structures called ‘dictionaries’. Dictionaries allowed you to store a ‘key’ and pair it with one or more ‘values’. Although unordered, it is possible to extract a value or values associated with a key. In the following python code chunk, I have provided an example of a dictionary.</p>
-<pre class="python"><code>
+<pre class="python"><code>import pandas as pd
+
 #create dictionary
 departments = {&#39;Natural Sciences&#39;: &#39;Biology&#39;, &#39;Natural Sciences&#39;: &#39;Chemistry&#39;, &#39;Business&#39;: &#39;MIS&#39;, &#39;Liberal Arts&#39;: &#39;English&#39;}
 
@@ -113,8 +110,22 @@ print(songs_in_playlist) #after song added
 ## Think of You
 ## Maggie Rogers
 ## [&#39;Color Song&#39;, &#39;Alaska&#39;]</code></pre>
-<p>Here’s an image!
-<img src="/post/2020-12-04-actual-first-post_files/01c1c5978016120df88144866a222681853b7af578.jpg" /></p>
+<pre class="python"><code>new_df = {&#39;lane1&#39; : [12, 23, 14, 16, 15], &#39;lane2&#39; : [16, 21, 7, 17, 14], &#39;lane3&#39; : [7, 15, 10, 10, 20]}
+df = pd.DataFrame(new_df)</code></pre>
+<p>Now, let’s move on to R:</p>
+<pre class="r"><code>#here&#39;s the dataframe from the python code:
+df_in_r &lt;- py$df
+print(df_in_r) #print out dataframe</code></pre>
+<pre><code>##   lane1 lane2 lane3
+## 1    12    16     7
+## 2    23    21    15
+## 3    14     7    10
+## 4    16    17    10
+## 5    15    14    20</code></pre>
+<pre class="r"><code>hist(df_in_r$lane1) #graphing a column of the dataframe as a histogram</code></pre>
+<p><img src="/post/2020-12-04-actual-first-post_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Hello and goodbye from the Alaskan Highway!</p>
+<p><img src="/post/2020-12-04-actual-first-post_files/01c1c5978016120df88144866a222681853b7af578.jpg" /></p>
 
             
         <hr>         <div class="related-posts">
